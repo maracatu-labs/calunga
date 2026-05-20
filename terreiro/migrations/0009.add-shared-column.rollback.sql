@@ -1,0 +1,1 @@
+ALTER TABLE conversas DROP COLUMN IF EXISTS shared;

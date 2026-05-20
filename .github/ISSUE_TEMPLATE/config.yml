@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Vulnerabilidade de segurança
+    url: https://github.com/maracatu-labs/calunga/security/advisories/new
+    about: Reporte privadamente via GitHub Security Advisories ou email contact@maracatu.org. Não abra issue pública.
+  - name: Dúvida ou discussão
+    url: https://github.com/maracatu-labs/calunga/discussions
+    about: Para perguntas, ideias em estágio inicial e debates sobre o roadmap.

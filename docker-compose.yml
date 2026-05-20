@@ -1,0 +1,139 @@
+services:
+
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-maracatu}
+      POSTGRES_USER: ${POSTGRES_USER:-maracatu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-maracatu}"]
+      interval: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: ./terreiro
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-maracatu}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-maracatu}
+      REDIS_URL: redis://redis:6379/0
+      CAMARA_API_URL: https://dadosabertos.camara.leg.br/api/v2
+      TRANSPARENCIA_API_TOKEN: ${TRANSPARENCIA_API_TOKEN:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-gemini-2.5-flash}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Maracatu <noreply@maracatu.org>}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./scripts:/scripts
+
+  dagster-webserver:
+    build:
+      context: ./terreiro
+      dockerfile: Dockerfile
+    command: sh -c 'mkdir -p /tmp/dagster && touch /tmp/dagster/dagster.yaml && dagster-webserver -h 0.0.0.0 -p 3002 -m pipeline.definitions'
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-maracatu}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-maracatu}
+      REDIS_URL: redis://redis:6379/0
+      CAMARA_API_URL: https://dadosabertos.camara.leg.br/api/v2
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      TRANSPARENCIA_API_TOKEN: ${TRANSPARENCIA_API_TOKEN:-}
+      DAGSTER_HOME: /tmp/dagster
+    volumes:
+      - dagster_home:/tmp/dagster
+      - cnpj_cache:/tmp/cnpj_data
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3002:3002"
+
+  dagster-daemon:
+    build:
+      context: ./terreiro
+      dockerfile: Dockerfile
+    command: sh -c 'mkdir -p /tmp/dagster && touch /tmp/dagster/dagster.yaml && dagster-daemon run -m pipeline.definitions'
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-maracatu}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-maracatu}
+      REDIS_URL: redis://redis:6379/0
+      CAMARA_API_URL: https://dadosabertos.camara.leg.br/api/v2
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      TRANSPARENCIA_API_TOKEN: ${TRANSPARENCIA_API_TOKEN:-}
+      DAGSTER_HOME: /tmp/dagster
+    volumes:
+      - dagster_home:/tmp/dagster
+      - cnpj_cache:/tmp/cnpj_data
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./cortejo
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:8000
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - api
+
+volumes:
+  pgdata:
+  redisdata:
+  caddy_data:
+  caddy_config:
+  dagster_home:
+  cnpj_cache:

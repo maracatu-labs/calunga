@@ -1,0 +1,5 @@
+
+DROP TABLE IF EXISTS orientacoes;
+DROP TABLE IF EXISTS votos;
+DROP TABLE IF EXISTS votacoes;
+DROP TABLE IF EXISTS proposicoes;

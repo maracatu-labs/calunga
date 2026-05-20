@@ -1,0 +1,2 @@
+
+DROP TABLE IF EXISTS candidatos_tse CASCADE;

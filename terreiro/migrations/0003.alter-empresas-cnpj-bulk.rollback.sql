@@ -1,0 +1,24 @@
+
+ALTER TABLE empresas DROP COLUMN IF EXISTS cnpj_basico;
+ALTER TABLE empresas DROP COLUMN IF EXISTS cnpj_ordem;
+ALTER TABLE empresas DROP COLUMN IF EXISTS cnpj_dv;
+ALTER TABLE empresas DROP COLUMN IF EXISTS matriz_filial;
+ALTER TABLE empresas DROP COLUMN IF EXISTS nome_fantasia_rf;
+ALTER TABLE empresas DROP COLUMN IF EXISTS motivo_situacao;
+ALTER TABLE empresas DROP COLUMN IF EXISTS cnae_secundaria;
+ALTER TABLE empresas DROP COLUMN IF EXISTS tipo_logradouro;
+ALTER TABLE empresas DROP COLUMN IF EXISTS numero;
+ALTER TABLE empresas DROP COLUMN IF EXISTS complemento;
+ALTER TABLE empresas DROP COLUMN IF EXISTS bairro;
+ALTER TABLE empresas DROP COLUMN IF EXISTS ddd;
+ALTER TABLE empresas DROP COLUMN IF EXISTS telefone;
+ALTER TABLE empresas DROP COLUMN IF EXISTS email;
+ALTER TABLE empresas DROP COLUMN IF EXISTS situacao_especial;
+ALTER TABLE empresas DROP COLUMN IF EXISTS data_situacao_especial;
+ALTER TABLE empresas DROP COLUMN IF EXISTS qualificacao_responsavel;
+ALTER TABLE empresas DROP COLUMN IF EXISTS ente_federativo;
+ALTER TABLE empresas DROP COLUMN IF EXISTS fonte;
+DROP INDEX IF EXISTS idx_empresas_cnpj_basico;
+DROP INDEX IF EXISTS idx_empresas_situacao;
+DROP INDEX IF EXISTS idx_empresas_uf;
+DROP INDEX IF EXISTS idx_empresas_cnae;

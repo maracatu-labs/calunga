@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+.git/
+.gitignore
+.env
+.env.*
+.vercel/
+.turbo/
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+.DS_Store
+*.md
+.vscode/
+.idea/
