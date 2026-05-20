@@ -1,5 +1,3 @@
-<div align="center">
-
 # Calunga
 
 **Civic oversight of Brazilian public administration, to the beat of the people.**
@@ -7,10 +5,6 @@
 Open source platform that makes Brazilian public spending accessible to any citizen via natural language chat.
 
 [maracatu.org](https://maracatu.org) · [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md) · [Security](SECURITY.md)
-
-</div>
-
----
 
 ## What it is
 
