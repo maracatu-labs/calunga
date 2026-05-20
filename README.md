@@ -2,22 +2,22 @@
 
 # Calunga
 
-**Controle social da administração pública brasileira, no ritmo do povo.**
+**Civic oversight of Brazilian public administration, to the beat of the people.**
 
-Plataforma open source que torna os gastos públicos brasileiros acessíveis a qualquer cidadão via chat em linguagem natural.
+Open source platform that makes Brazilian public spending accessible to any citizen via natural language chat.
 
-[maracatu.org](https://maracatu.org) · [Contribuindo](CONTRIBUTING.md) · [Código de Conduta](CODE_OF_CONDUCT.md) · [Segurança](SECURITY.md)
+[maracatu.org](https://maracatu.org) · [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md) · [Security](SECURITY.md)
 
 </div>
 
 ---
 
-## O que é
+## What it is
 
-Os dados existem — são públicos, são abertos. Mas estão espalhados em dezenas de portais, em formatos diferentes, com linguagem burocrática. Calunga é uma plataforma conversacional onde você pergunta em português e recebe respostas claras, com dados, fontes e alertas de irregularidades.
+The data exists — it's public, it's open. But it's scattered across dozens of portals, in different formats, wrapped in bureaucratic language. Calunga is a conversational platform where you ask in plain Portuguese and get clear answers, with data, sources, and alerts for irregularities.
 
 ```
-você pergunta:   "quanto o deputado X gastou em 2025?"
+you ask:         "quanto o deputado X gastou em 2025?"
                  "essa empresa que recebeu o contrato é regular?"
                  "me mostra os gastos suspeitos dessa semana"
 
@@ -26,46 +26,46 @@ Receita Federal e SICONFI — tabelas, gráficos, links para fontes oficiais,
 e alertas quando algo parece irregular.
 ```
 
-## Componentes
+## Components
 
-Calunga faz parte do projeto **Maracatu** ([maracatu.org](https://maracatu.org)). Os componentes carregam nomes da manifestação cultural pernambucana que dá nome à iniciativa:
+Calunga is part of the **Maracatu** project ([maracatu.org](https://maracatu.org)). Its components are named after elements of the Pernambuco cultural manifestation that gives the initiative its name:
 
-| Nome | O que é |
+| Name | What it is |
 |------|---------|
-| **Calunga** | Agente de IA (LangGraph + Gemini) — boneca sagrada que protege a nação |
-| **Baque** | Pipeline de ingestão (Dagster + Celery) — a batida que nunca para |
-| **Gonguê** | Classificadores de anomalias — sino que alerta |
-| **Terreiro** | API REST (FastAPI) — espaço onde tudo se encontra |
-| **Cortejo** | Frontend web (Next.js) — a procissão pública |
+| **Calunga** | AI agent (LangGraph + Gemini) — the sacred doll that protects the nation |
+| **Baque** | Ingestion pipeline (Dagster + Celery) — the beat that never stops |
+| **Gonguê** | Anomaly classifiers — the bell that warns |
+| **Terreiro** | REST API (FastAPI) — the space where everything meets |
+| **Cortejo** | Web frontend (Next.js) — the public procession |
 
 ## Stack
 
-| Camada | Tecnologia |
+| Layer | Technology |
 |--------|-----------|
 | Frontend | Next.js 15 (App Router), Tailwind v4, Vercel AI SDK, Recharts |
-| API | FastAPI, Pydantic v2, asyncpg (SQL nativo) |
-| Agente IA | LangGraph, langchain-google-genai (Gemini 2.5 Flash / Pro com fallback) |
-| Banco | PostgreSQL 16 + pgvector |
+| API | FastAPI, Pydantic v2, asyncpg (raw SQL) |
+| AI agent | LangGraph, langchain-google-genai (Gemini 2.5 Flash / Pro with fallback) |
+| Database | PostgreSQL 16 + pgvector |
 | Embeddings | BGE-M3 via Hugging Face (1024 dim) |
 | Cache | Redis 7 |
 | Pipeline | Dagster + Celery Beat |
 | ML | scikit-learn (K-Means) |
 | Infra | Docker Compose, Caddy (auto-SSL) |
 
-## Fontes de dados
+## Data sources
 
-Todas gratuitas e abertas:
+All free and open:
 
-- **Câmara dos Deputados** — CEAP, deputados, partidos, votações
-- **Senado Federal** — CEAP senadores, votações
-- **Portal da Transparência** — sanções (CEIS, CNEP, CEPIM), CPGF, contratos, viagens, emendas
-- **Receita Federal** — cadastro CNPJ (CSV bulk) + BrasilAPI (on-demand)
-- **SICONFI / Tesouro Nacional** — dados fiscais de estados e capitais
-- **TSE** — candidatos e prestação de contas
+- **Câmara dos Deputados** — CEAP, deputies, parties, votes
+- **Senado Federal** — senator CEAP, votes
+- **Portal da Transparência** — sanctions (CEIS, CNEP, CEPIM), CPGF, contracts, travel, earmarks
+- **Receita Federal** — CNPJ registry (CSV bulk) + BrasilAPI (on-demand)
+- **SICONFI / Tesouro Nacional** — fiscal data from states and capitals
+- **TSE** — candidates and campaign finance reports
 
 ## Quickstart
 
-Pré-requisitos: Docker, Docker Compose, `make`. Para desenvolvimento local sem Docker: Python 3.12+ com [`uv`](https://docs.astral.sh/uv/) e Node.js 20+.
+Requirements: Docker, Docker Compose, `make`. For local development without Docker: Python 3.12+ with [`uv`](https://docs.astral.sh/uv/) and Node.js 20+.
 
 ```bash
 git clone git@github.com:maracatu-labs/calunga.git
@@ -77,44 +77,44 @@ cp .env.example .env
 make dev
 ```
 
-Pronto. Frontend em [http://localhost:3000](http://localhost:3000), API em [http://localhost:8000](http://localhost:8000), Dagster em [http://localhost:3002](http://localhost:3002).
+That's it. Frontend at [http://localhost:3000](http://localhost:3000), API at [http://localhost:8000](http://localhost:8000), Dagster at [http://localhost:3002](http://localhost:3002).
 
-Para popular o banco com dados reais, abra o Dagster e dispare o job `carga_fase1_backfill` (a cascata de sensores cuida das demais fases).
+To seed the database with real data, open Dagster and trigger the `carga_fase1_backfill` job (the sensor cascade handles the remaining phases).
 
-## Comandos úteis
+## Useful commands
 
-| Comando | O que faz |
+| Command | What it does |
 |---------|-----------|
-| `make dev` | Sobe tudo (banco, API, frontend, Dagster) |
-| `make down` | Para os containers (preserva dados) |
-| `make db-migrate` | Aplica migrations SQL |
-| `make test` | Roda os testes |
-| `make logs` | Logs de todos os containers |
-| `make backup` | Dump do banco em `backups/` |
-| `make help` | Lista todos os targets |
+| `make dev` | Brings everything up (database, API, frontend, Dagster) |
+| `make down` | Stops the containers (preserves data) |
+| `make db-migrate` | Applies SQL migrations |
+| `make test` | Runs the tests |
+| `make logs` | Logs from all containers |
+| `make backup` | Dumps the database into `backups/` |
+| `make help` | Lists all targets |
 
-## Estrutura
+## Structure
 
 ```
 calunga/
-├── cortejo/         # Frontend Next.js
-├── terreiro/        # API FastAPI + agente Calunga + classificadores Gonguê
-│   ├── app/         # FastAPI + LangGraph + queries SQL
-│   ├── pipeline/    # Assets Dagster (Baque)
-│   ├── migrations/  # SQL puro (yoyo-migrations)
+├── cortejo/         # Next.js frontend
+├── terreiro/        # FastAPI backend + Calunga agent + Gonguê classifiers
+│   ├── app/         # FastAPI + LangGraph + SQL queries
+│   ├── pipeline/    # Dagster assets (Baque)
+│   ├── migrations/  # Plain SQL (yoyo-migrations)
 │   └── tests/       # pytest
-├── scripts/         # Utilitários de operação
+├── scripts/         # Operational utilities
 ├── docker-compose.yml
 ├── Makefile
 └── Caddyfile
 ```
 
-## Contribuindo
+## Contributing
 
-Toda contribuição é bem-vinda — código, documentação, relatos de bug, sugestão de classificadores, dados públicos novos para integrar. Leia [CONTRIBUTING.md](CONTRIBUTING.md) para o fluxo de PRs e [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) para o que esperamos do ambiente da comunidade.
+Every contribution is welcome — code, documentation, bug reports, classifier suggestions, new public datasets to integrate. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the PR workflow and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for what we expect from the community environment.
 
-Encontrou uma vulnerabilidade? Veja [SECURITY.md](SECURITY.md) antes de abrir uma issue pública.
+Found a vulnerability? See [SECURITY.md](SECURITY.md) before opening a public issue.
 
-## Licença
+## License
 
 [MIT](LICENSE).

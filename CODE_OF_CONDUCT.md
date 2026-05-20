@@ -1,45 +1,45 @@
-# Código de Conduta do Pacto de Contribuidores
+# Contributor Covenant Code of Conduct
 
-## Nosso compromisso
+## Our pledge
 
-Como membros, contribuidores e líderes deste projeto, comprometemo-nos a fazer da participação em nossa comunidade uma experiência livre de assédio para todas as pessoas, independentemente de idade, tamanho corporal, deficiência visível ou invisível, etnia, características sexuais, identidade e expressão de gênero, nível de experiência, escolaridade, status socioeconômico, nacionalidade, aparência pessoal, raça, religião ou identidade e orientação sexual.
+As members, contributors, and leaders of this project, we pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socioeconomic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
 
-Comprometemo-nos a agir e interagir de formas que contribuam para uma comunidade aberta, acolhedora, diversa, inclusiva e saudável.
+We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
 
-## Nossos padrões
+## Our standards
 
-Exemplos de comportamentos que contribuem para um ambiente positivo:
+Examples of behavior that contribute to a positive environment:
 
-- Demonstrar empatia e bondade para com outras pessoas
-- Respeitar opiniões, pontos de vista e experiências divergentes
-- Dar e aceitar feedback construtivo de forma respeitosa
-- Aceitar responsabilidade e pedir desculpas a quem foi afetado por nossos erros, aprendendo com a experiência
-- Priorizar o que é melhor para a comunidade como um todo, não apenas para nós mesmos
+- Demonstrating empathy and kindness toward other people
+- Being respectful of differing opinions, viewpoints, and experiences
+- Giving and gracefully accepting constructive feedback
+- Accepting responsibility and apologizing to those affected by our mistakes, and learning from the experience
+- Focusing on what is best for the overall community, not just for ourselves
 
-Exemplos de comportamentos inaceitáveis:
+Examples of unacceptable behavior:
 
-- Uso de linguagem ou imagens sexualizadas, e atenção ou avanços sexuais de qualquer tipo
-- Comentários ofensivos, insultos ou ataques pessoais ou políticos (*trolling*)
-- Assédio público ou privado
-- Publicar informações privadas de outras pessoas (endereço físico, e-mail, etc.) sem permissão explícita
-- Outras condutas que possam ser razoavelmente consideradas inapropriadas em um ambiente profissional
+- The use of sexualized language or imagery, and sexual attention or advances of any kind
+- Trolling, insulting or derogatory comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information, such as a physical or email address, without their explicit permission
+- Other conduct that could reasonably be considered inappropriate in a professional setting
 
-## Responsabilidades dos mantenedores
+## Maintainer responsibilities
 
-Os mantenedores são responsáveis por esclarecer e fazer cumprir nossos padrões de comportamento aceitável e tomarão ações corretivas apropriadas e justas em resposta a qualquer comportamento que considerem inadequado, ameaçador, ofensivo ou prejudicial.
+Maintainers are responsible for clarifying and enforcing our standards of acceptable behavior and will take appropriate and fair corrective action in response to any behavior they deem inappropriate, threatening, offensive, or harmful.
 
-Os mantenedores têm o direito e a responsabilidade de remover, editar ou rejeitar comentários, commits, código, edições da wiki, issues e outras contribuições que não estejam alinhadas com este Código de Conduta, e comunicarão as razões das decisões de moderação quando apropriado.
+Maintainers have the right and responsibility to remove, edit, or reject comments, commits, code, wiki edits, issues, and other contributions that are not aligned with this Code of Conduct, and will communicate the reasons for moderation decisions when appropriate.
 
-## Escopo
+## Scope
 
-Este Código de Conduta se aplica a todos os espaços da comunidade e também quando uma pessoa estiver representando oficialmente a comunidade em espaços públicos.
+This Code of Conduct applies to all community spaces, and also applies when an individual is officially representing the community in public spaces.
 
-## Aplicação
+## Enforcement
 
-Casos de comportamento abusivo, de assédio ou de qualquer outra forma inaceitável podem ser relatados aos mantenedores responsáveis em **contact@maracatu.org**. Todas as denúncias serão analisadas e investigadas prontamente e de forma justa.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the maintainers responsible for enforcement at **contact@maracatu.org**. All complaints will be reviewed and investigated promptly and fairly.
 
-Os mantenedores são obrigados a respeitar a privacidade e a segurança de quem denuncia.
+Maintainers are obligated to respect the privacy and security of the reporter of any incident.
 
-## Atribuição
+## Attribution
 
-Este Código de Conduta é adaptado do [Contributor Covenant](https://www.contributor-covenant.org), versão 2.1, disponível em [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html).
+This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1, available at [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html).

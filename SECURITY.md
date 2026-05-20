@@ -1,46 +1,46 @@
-# Política de Segurança
+# Security Policy
 
-Levamos a sério a segurança do Calunga e de quem o usa. Obrigado por nos ajudar a manter o projeto seguro.
+We take the security of Calunga and its users seriously. Thanks for helping us keep the project safe.
 
-## Reportando uma vulnerabilidade
+## Reporting a vulnerability
 
-**Não abra issues públicas para vulnerabilidades de segurança.** Em vez disso:
+**Don't open public issues for security vulnerabilities.** Instead:
 
-- Use [GitHub Security Advisories](https://github.com/maracatu-labs/calunga/security/advisories/new) (preferencial — privado por padrão), **ou** envie e-mail para **contact@maracatu.org** com:
-  - Descrição da vulnerabilidade
-  - Passos para reproduzir
-  - Impacto potencial
-  - Sugestão de correção, se tiver
+- Use [GitHub Security Advisories](https://github.com/maracatu-labs/calunga/security/advisories/new) (preferred — private by default), **or** email **contact@maracatu.org** with:
+  - A description of the vulnerability
+  - Steps to reproduce
+  - Potential impact
+  - A suggested fix, if you have one
 
-Vamos confirmar o recebimento em até 72 horas e trabalhar com você para entender e corrigir o problema. Após a correção ser publicada, podemos creditar você na nota de lançamento (se desejar).
+We'll confirm receipt within 72 hours and work with you to understand and fix the issue. Once a fix is published, we can credit you in the release notes (if you'd like).
 
-## Escopo
+## Scope
 
-Este projeto inclui:
+This project includes:
 
-- API REST (`terreiro/`)
-- Agente IA com chat (`terreiro/app/agent/`)
-- Frontend web (`cortejo/`)
-- Pipeline de ingestão (`terreiro/pipeline/`, `terreiro/app/tasks/`)
-- Classificadores (`terreiro/app/classifiers/`)
+- REST API (`terreiro/`)
+- AI chat agent (`terreiro/app/agent/`)
+- Web frontend (`cortejo/`)
+- Ingestion pipeline (`terreiro/pipeline/`, `terreiro/app/tasks/`)
+- Classifiers (`terreiro/app/classifiers/`)
 
-**Fora de escopo:**
+**Out of scope:**
 
-- Vulnerabilidades em dependências de terceiros — reporte ao mantenedor original primeiro. Avise-nos se afetar o Calunga diretamente.
-- Ataques que dependem de acesso físico ou social engineering contra contribuidores específicos.
+- Vulnerabilities in third-party dependencies — report them to the original maintainer first. Let us know if it directly affects Calunga.
+- Attacks that rely on physical access or social engineering against specific contributors.
 
-## Boas práticas para self-hosters
+## Best practices for self-hosters
 
-Se você está rodando o Calunga em produção:
+If you're running Calunga in production:
 
-- Sempre defina `JWT_SECRET` com um valor aleatório forte (32+ bytes). Gere com `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
-- Não exponha as portas do PostgreSQL ou Redis publicamente — use apenas a rede interna do Docker.
-- Configure `CORS_ORIGINS` apontando para o domínio público (não use `*`).
-- Mantenha `COOKIE_SECURE=true` em produção (já é o padrão).
-- Use HTTPS via Caddy (auto-SSL com Let's Encrypt) ou outro proxy reverso à sua escolha.
-- Rotacione `GOOGLE_API_KEY`, `TRANSPARENCIA_API_TOKEN` e `RESEND_API_KEY` regularmente.
-- Faça backups periódicos do banco (`make backup`).
+- Always set `JWT_SECRET` to a strong random value (32+ bytes). Generate one with `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+- Don't expose PostgreSQL or Redis ports publicly — use only the internal Docker network.
+- Configure `CORS_ORIGINS` pointing to your public domain (don't use `*`).
+- Keep `COOKIE_SECURE=true` in production (it's the default).
+- Use HTTPS via Caddy (auto-SSL with Let's Encrypt) or another reverse proxy of your choice.
+- Rotate `GOOGLE_API_KEY`, `TRANSPARENCIA_API_TOKEN`, and `RESEND_API_KEY` regularly.
+- Run periodic database backups (`make backup`).
 
-## Histórico de avisos
+## Advisory history
 
-Quando publicarmos um aviso de segurança, ele aparecerá em [GitHub Security Advisories](https://github.com/maracatu-labs/calunga/security/advisories).
+When we publish a security advisory, it will appear at [GitHub Security Advisories](https://github.com/maracatu-labs/calunga/security/advisories).

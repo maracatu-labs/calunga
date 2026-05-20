@@ -1,48 +1,48 @@
 ---
-name: Reportar bug
-about: Algo não está funcionando como esperado
+name: Bug report
+about: Something isn't working as expected
 title: "[bug] "
 labels: bug
 assignees: ''
 ---
 
-## Descrição
+## Description
 
-<!-- Descreva o que está acontecendo. -->
+<!-- Describe what's happening. -->
 
-## Como reproduzir
+## How to reproduce
 
 1. ...
 2. ...
 3. ...
 
-## Comportamento esperado
+## Expected behavior
 
-<!-- O que você esperava que acontecesse? -->
+<!-- What did you expect to happen? -->
 
-## Comportamento atual
+## Actual behavior
 
-<!-- O que está acontecendo no lugar? -->
+<!-- What's happening instead? -->
 
-## Ambiente
+## Environment
 
-- SO:
-- Versão do Docker:
-- Versão do Python (se rodando sem Docker):
-- Versão do Node (se rodando sem Docker):
+- OS:
+- Docker version:
+- Python version (if running without Docker):
+- Node version (if running without Docker):
 - Commit / branch:
 
 ## Logs
 
 <details>
-<summary>Logs relevantes</summary>
+<summary>Relevant logs</summary>
 
 ```
-cole aqui a saída de `make logs-api`, `make logs-web` ou similar
+paste the output of `make logs-api`, `make logs-web`, or similar here
 ```
 
 </details>
 
-## Contexto adicional
+## Additional context
 
-<!-- Screenshots, hipóteses, qualquer coisa que ajude. -->
+<!-- Screenshots, hypotheses, anything else that helps. -->

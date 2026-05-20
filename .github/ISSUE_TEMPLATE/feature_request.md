@@ -1,33 +1,33 @@
 ---
-name: Sugerir feature
-about: Proposta de nova funcionalidade ou melhoria
+name: Feature request
+about: Propose a new feature or improvement
 title: "[feature] "
 labels: enhancement
 assignees: ''
 ---
 
-## Problema
+## Problem
 
-<!-- Qual problema essa feature resolve? Para quem? -->
+<!-- What problem does this feature solve? For whom? -->
 
-## Proposta
+## Proposal
 
-<!-- O que você está propondo? Descreva a feature ideal. -->
+<!-- What are you proposing? Describe the ideal feature. -->
 
-## Alternativas consideradas
+## Alternatives considered
 
-<!-- Já pensou em outras formas de resolver? Por que essa é melhor? -->
+<!-- Have you thought about other ways to solve this? Why is this one better? -->
 
-## Impacto
+## Impact
 
-- [ ] Mexe no agente Calunga (tools, prompt, model routing)
-- [ ] Mexe no pipeline Baque (assets Dagster, ingestão)
-- [ ] Mexe nos classificadores Gonguê
-- [ ] Mexe na API Terreiro (endpoints, schemas)
-- [ ] Mexe no frontend Cortejo
-- [ ] Adiciona nova fonte de dados pública
-- [ ] Outro:
+- [ ] Touches the Calunga agent (tools, prompt, model routing)
+- [ ] Touches the Baque pipeline (Dagster assets, ingestion)
+- [ ] Touches the Gonguê classifiers
+- [ ] Touches the Terreiro API (endpoints, schemas)
+- [ ] Touches the Cortejo frontend
+- [ ] Adds a new public data source
+- [ ] Other:
 
-## Contexto adicional
+## Additional context
 
-<!-- Links, prints, exemplos de outros projetos. -->
+<!-- Links, screenshots, examples from other projects. -->

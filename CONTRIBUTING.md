@@ -1,16 +1,16 @@
-# Contribuindo com o Calunga
+# Contributing to Calunga
 
-Obrigado pelo interesse em contribuir! Calunga é um projeto open source que existe para ampliar o acesso de qualquer cidadão aos gastos públicos brasileiros. Toda forma de ajuda conta — código, documentação, sugestão de classificadores, novas fontes de dados, relato de bug.
+Thanks for your interest in contributing! Calunga is an open source project that exists to broaden any citizen's access to Brazilian public spending. Every form of help counts — code, documentation, classifier suggestions, new data sources, bug reports.
 
-## Antes de começar
+## Before you start
 
-- Leia o [Código de Conduta](CODE_OF_CONDUCT.md).
-- Encontrou uma vulnerabilidade? Não abra issue pública. Siga o [SECURITY.md](SECURITY.md).
-- Para mudanças grandes (refatorações, novas features), abra uma issue antes para discutir a abordagem.
+- Read the [Code of Conduct](CODE_OF_CONDUCT.md).
+- Found a vulnerability? Don't open a public issue. Follow [SECURITY.md](SECURITY.md).
+- For large changes (refactors, new features), open an issue first to discuss the approach.
 
-## Como rodar o projeto
+## How to run the project
 
-Pré-requisitos: Docker, Docker Compose e `make`. Para desenvolvimento sem Docker, também Python 3.12+ com [`uv`](https://docs.astral.sh/uv/) e Node.js 20+.
+Requirements: Docker, Docker Compose, and `make`. For development without Docker, also Python 3.12+ with [`uv`](https://docs.astral.sh/uv/) and Node.js 20+.
 
 ```bash
 git clone git@github.com:maracatu-labs/calunga.git
@@ -20,16 +20,16 @@ cp .env.example .env
 make dev
 ```
 
-`GOOGLE_API_KEY` é obrigatória para o chat funcionar. `TRANSPARENCIA_API_TOKEN` é opcional, mas necessária para as fontes do Portal da Transparência.
+`GOOGLE_API_KEY` is required for the chat to work. `TRANSPARENCIA_API_TOKEN` is optional but needed for Portal da Transparência sources.
 
-## Fluxo de PR
+## PR workflow
 
-1. Faça fork do repositório.
-2. Crie um branch a partir de `main` com nome descritivo (`feat/...`, `fix/...`, `docs/...`).
-3. Faça seus commits seguindo a [convenção abaixo](#mensagens-de-commit).
-4. Rode `make test` localmente antes de abrir o PR.
-5. Abra o PR descrevendo o problema, a solução e como testar.
-6. Aguarde revisão. Toda contribuição passa por code review.
+1. Fork the repository.
+2. Create a branch from `main` with a descriptive name (`feat/...`, `fix/...`, `docs/...`).
+3. Make your commits following the [convention below](#commit-messages).
+4. Run `make test` locally before opening the PR.
+5. Open the PR describing the problem, the solution, and how to test it.
+6. Wait for review. Every contribution goes through code review.
 
 ## Commit messages
 
@@ -53,48 +53,49 @@ We use **squash merge** — your PR title and description will end up as the sin
 
 Code identifiers (variables, functions, classes) are in English. User-facing content (UI text, error messages, this CONTRIBUTING, the README) stays in Brazilian Portuguese.
 
-## Convenções de código
+## Code conventions
 
 ### Python (`terreiro/`)
 
-- Use `uv` para gerenciar dependências (`uv add`, `uv sync`). Não use `pip` ou `poetry`.
-- SQL nativo com `asyncpg`, sempre parametrizado (`$1`, `$2`). Sem ORM.
-- Schemas Pydantic v2 são a fonte única de verdade entre API e tools do agente.
-- Async em todo lugar (httpx, asyncpg, FastAPI).
-- Migrations em SQL puro com `yoyo-migrations` em `terreiro/migrations/`.
-- Sem comentários no código além de docstrings — nomes claros valem mais.
+- Use `uv` to manage dependencies (`uv add`, `uv sync`). Don't use `pip` or `poetry`.
+- Raw SQL with `asyncpg`, always parameterized (`$1`, `$2`). No ORM.
+- Pydantic v2 schemas are the single source of truth between the API and the agent tools.
+- Async everywhere (httpx, asyncpg, FastAPI).
+- Migrations as raw SQL with `yoyo-migrations` in `terreiro/migrations/`.
+- No inline comments beyond docstrings — clear names are worth more.
 
 ### TypeScript (`cortejo/`)
 
-- App Router do Next.js 15 (não Pages Router).
-- Server Actions em `src/lib/actions.ts` — sem `useEffect` para dados, sem `fetch` no cliente.
-- `useChat()` do Vercel AI SDK para consumir SSE.
-- Gráficos via Recharts com formatação BRL.
-- Sem comentários inline além de JSDoc — nomes claros valem mais.
+- Next.js 15 App Router (not Pages Router).
+- Server Actions in `src/lib/actions.ts` — no `useEffect` for data, no client-side `fetch`.
+- `useChat()` from the Vercel AI SDK to consume SSE.
+- Charts via Recharts with BRL formatting.
+- No inline comments beyond JSDoc — clear names are worth more.
 
-### Geral
+### General
 
-- Código em inglês (variáveis, funções, classes).
-- Conteúdo voltado ao usuário em português brasileiro.
-- Valores monetários sempre em `DECIMAL(12,2)` no banco e na API.
+- Code identifiers (variables, functions, classes) in English.
+- OSS documentation (README, this guide, code of conduct, security policy, issue/PR templates) in English.
+- Strings shown to the end user inside the running app — Cortejo's UI labels, Calunga's chat responses to users — stay in Brazilian Portuguese. The audience for the deployed product is Brazilian.
+- Monetary values always as `DECIMAL(12,2)` in the database and in the API.
 
-## Adicionando uma nova fonte de dados
+## Adding a new data source
 
-1. Adicione o cliente HTTP em `terreiro/app/services/`.
-2. Adicione um asset do Dagster em `terreiro/pipeline/definitions.py` (com `RetryPolicy` se chamar API externa).
-3. Adicione a migration SQL em `terreiro/migrations/`.
-4. Adicione queries em `terreiro/app/queries/`.
-5. Crie a tool da Calunga em `terreiro/app/agent/tools.py` seguindo o contrato unificado (`modo` + `fonte`).
-6. Cubra com testes em `terreiro/tests/`.
+1. Add the HTTP client in `terreiro/app/services/`.
+2. Add a Dagster asset in `terreiro/pipeline/definitions.py` (with `RetryPolicy` if it calls an external API).
+3. Add the SQL migration in `terreiro/migrations/`.
+4. Add queries in `terreiro/app/queries/`.
+5. Create the Calunga tool in `terreiro/app/agent/tools.py` following the unified contract (`modo` + `fonte`).
+6. Cover it with tests in `terreiro/tests/`.
 
-## Reportando bugs
+## Reporting bugs
 
-Use o template de issue. Inclua:
-- Versão do Docker / Python / Node
-- Passos para reproduzir
-- O que esperava vs. o que aconteceu
-- Logs relevantes (`make logs-api`, `make logs-web`)
+Use the issue template. Include:
+- Docker / Python / Node version
+- Steps to reproduce
+- What you expected vs. what happened
+- Relevant logs (`make logs-api`, `make logs-web`)
 
-## Dúvidas
+## Questions
 
-Abra uma issue marcando como `question` ou inicie uma discussion no GitHub.
+Open an issue tagged as `question` or start a discussion on GitHub.
