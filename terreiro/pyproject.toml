@@ -25,6 +25,7 @@ dependencies = [
     "sse-starlette>=2.0.0",
     "yoyo-migrations>=8.0.0",
     "sentence-transformers>=3.0.0",
+    "sentry-sdk[fastapi]>=2.0.0",
 ]
 
 [project.optional-dependencies]

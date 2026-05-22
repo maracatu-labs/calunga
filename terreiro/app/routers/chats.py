@@ -15,6 +15,7 @@ from app.metrics import incr, incr_by_dim, time_ms
 from app.queries import conversas as conversas_q
 from app.schemas.chat import ChatRequest
 from app.schemas.conversa import ConversaDetail, ConversaList, ConversaResponse
+from app.services import token_quota
 
 logger = logging.getLogger(__name__)
 
@@ -51,8 +52,23 @@ async def _ainvoke_with_fallback(model: str, messages: list, config: dict | None
 
 @router.post("/chats")
 async def create_chat(request: ChatRequest, current_user: dict = Depends(get_current_user)):
+    last_user = next((m for m in reversed(request.messages) if m.role == "user"), None)
+    if last_user and len(last_user.content) > settings.max_user_message_chars:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Mensagem muito longa. Limite: {settings.max_user_message_chars} caracteres.",
+        )
+    total_chars = sum(len(m.content) for m in request.messages)
+    if total_chars > settings.max_request_chars:
+        raise HTTPException(
+            status_code=413,
+            detail="Conversa muito longa para enviar. Inicie uma nova consulta.",
+        )
+
+    await token_quota.check_quota(current_user["id"])
+
     pool = get_pool()
-    last_user_msg = next((m.content for m in reversed(request.messages) if m.role == "user"), "")
+    last_user_msg = last_user.content if last_user else ""
     model = request.model or route_model(last_user_msg, settings.default_model)
 
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
@@ -65,7 +81,6 @@ async def create_chat(request: ChatRequest, current_user: dict = Depends(get_cur
         user_id = uuid.UUID(current_user["id"])
         conversa_id = await conversas_q.criar_conversa(pool, titulo, user_id=user_id)
 
-    last_user = next((m for m in reversed(request.messages) if m.role == "user"), None)
     if last_user:
         await conversas_q.adicionar_mensagem(pool, conversa_id, "user", last_user.content)
 
@@ -74,7 +89,10 @@ async def create_chat(request: ChatRequest, current_user: dict = Depends(get_cur
     if request.stream:
         agent = create_agent(model=model)
         return EventSourceResponse(
-            _stream_and_persist(agent, messages, pool, conversa_id, agent_config),
+            _stream_and_persist(
+                agent, messages, pool, conversa_id, agent_config,
+                user_id=current_user["id"], input_chars=total_chars,
+            ),
             media_type="text/event-stream",
             headers={"X-Conversa-Id": str(conversa_id)},
         )
@@ -94,6 +112,7 @@ async def create_chat(request: ChatRequest, current_user: dict = Depends(get_cur
     content = _extract_text(last_message.content)
     await conversas_q.adicionar_mensagem(pool, conversa_id, "assistant", content)
     await set_cached_response(last_user_content, model_used, content, conversa_id=str(conversa_id))
+    await token_quota.record_usage(current_user["id"], total_chars, len(content))
     return {
         "role": "assistant",
         "content": content,
@@ -115,7 +134,10 @@ def _extract_text(content) -> str:
         return "".join(parts)
     return str(content)
 
-async def _stream_and_persist(agent, messages, pool, conversa_id, config=None):
+async def _stream_and_persist(
+    agent, messages, pool, conversa_id, config=None,
+    user_id: str | None = None, input_chars: int = 0,
+):
     """Stream agent response and persist the full assistant message at the end."""
     full_response = []
 
@@ -134,6 +156,8 @@ async def _stream_and_persist(agent, messages, pool, conversa_id, config=None):
     if full_response:
         content = "".join(full_response)
         await conversas_q.adicionar_mensagem(pool, conversa_id, "assistant", content)
+        if user_id:
+            await token_quota.record_usage(user_id, input_chars, len(content))
 
 @router.get("/conversas", response_model=ConversaList)
 async def listar_conversas(

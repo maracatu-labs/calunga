@@ -29,7 +29,6 @@ _LIMIT_AUTH = 1000
 
 _EXEMPT_PREFIXES = (
     "/health",
-    "/v1/auth/",
 )
 
 def _extract_user_id(request: Request) -> str | None:
@@ -43,8 +42,7 @@ def _extract_user_id(request: Request) -> str | None:
     except jwt.PyJWTError:
         return None
 
-def _extract_ip(request: Request) -> str:
-
+def extract_ip(request: Request) -> str:
     fwd = request.headers.get("x-forwarded-for")
     if fwd:
         return fwd.split(",")[0].strip()
@@ -61,7 +59,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             key = f"rl:user:{user_id}"
             limit = _LIMIT_AUTH
         else:
-            key = f"rl:ip:{_extract_ip(request)}"
+            key = f"rl:ip:{extract_ip(request)}"
             limit = _LIMIT_PUBLIC
 
         try:
