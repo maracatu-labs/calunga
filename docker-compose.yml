@@ -1,3 +1,8 @@
+# Requires the external "edge_proxy" network to be created once on the host:
+#   docker network create edge_proxy
+# In production it is created by the /srv/edge stack (Traefik + cloudflared).
+# In development it is just an empty bridge that Traefik never connects to.
+
 services:
 
   db:
@@ -9,13 +14,20 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./docker/postgres:/docker-entrypoint-initdb.d
+      - ./docker/postgres:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-maracatu}"]
       interval: 5s
       retries: 5
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
+    networks: [calunga_internal]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 2g
 
   redis:
     image: redis:7-alpine
@@ -27,7 +39,14 @@ services:
       interval: 5s
       retries: 5
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
+    networks: [calunga_internal]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512m
 
   api:
     build:
@@ -35,6 +54,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
+      APP_ENV: ${APP_ENV:-development}
       DATABASE_URL: postgresql://${POSTGRES_USER:-maracatu}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-maracatu}
       REDIS_URL: redis://redis:6379/0
       CAMARA_API_URL: https://dadosabertos.camara.leg.br/api/v2
@@ -45,6 +65,15 @@ services:
       APP_URL: ${APP_URL:-http://localhost:3000}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-Maracatu <noreply@maracatu.org>}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      MAGIC_LINK_EMAIL_LIMIT_HOUR: ${MAGIC_LINK_EMAIL_LIMIT_HOUR:-3}
+      MAGIC_LINK_IP_LIMIT_HOUR: ${MAGIC_LINK_IP_LIMIT_HOUR:-10}
+      TOKEN_QUOTA_DAILY_INPUT: ${TOKEN_QUOTA_DAILY_INPUT:-200000}
+      TOKEN_QUOTA_DAILY_OUTPUT: ${TOKEN_QUOTA_DAILY_OUTPUT:-50000}
+      MAX_USER_MESSAGE_CHARS: ${MAX_USER_MESSAGE_CHARS:-8000}
+      MAX_REQUEST_CHARS: ${MAX_REQUEST_CHARS:-60000}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0.1}
     depends_on:
       db:
         condition: service_healthy
@@ -57,9 +86,23 @@ services:
       retries: 3
       start_period: 10s
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
-      - ./scripts:/scripts
+      - ./scripts:/scripts:ro
+    networks: [calunga_internal, edge_proxy]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=edge_proxy"
+      - "traefik.http.routers.calunga-api.rule=(Host(`${CALUNGA_HOST:-localhost}`) || Host(`www.${CALUNGA_HOST:-localhost}`)) && (PathPrefix(`/v1`) || Path(`/health`))"
+      - "traefik.http.routers.calunga-api.entrypoints=web"
+      - "traefik.http.services.calunga-api.loadbalancer.server.port=8000"
 
   dagster-webserver:
     build:
@@ -81,7 +124,15 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "3002:3002"
+      - "127.0.0.1:3002:3002"
+    networks: [calunga_internal]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    deploy:
+      resources:
+        limits:
+          memory: 1g
 
   dagster-daemon:
     build:
@@ -102,6 +153,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks: [calunga_internal]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    deploy:
+      resources:
+        limits:
+          memory: 1g
 
   web:
     build:
@@ -111,29 +170,37 @@ services:
     environment:
       API_URL: http://api:8000
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      APP_ENV: ${APP_ENV:-development}
+      NEXT_PUBLIC_APP_ENV: ${APP_ENV:-development}
+      NEXT_PUBLIC_SENTRY_DSN_WEB: ${NEXT_PUBLIC_SENTRY_DSN_WEB:-}
     depends_on:
       - api
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
+    networks: [calunga_internal, edge_proxy]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=edge_proxy"
+      - "traefik.http.routers.calunga-web.rule=Host(`${CALUNGA_HOST:-localhost}`) || Host(`www.${CALUNGA_HOST:-localhost}`)"
+      - "traefik.http.routers.calunga-web.entrypoints=web"
+      - "traefik.http.routers.calunga-web.priority=1"
+      - "traefik.http.services.calunga-web.loadbalancer.server.port=3000"
 
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - web
-      - api
+networks:
+  calunga_internal:
+    driver: bridge
+  edge_proxy:
+    external: true
 
 volumes:
   pgdata:
   redisdata:
-  caddy_data:
-  caddy_config:
   dagster_home:
   cnpj_cache:
