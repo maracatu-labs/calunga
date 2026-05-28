@@ -12,12 +12,34 @@ async function getToken(): Promise<string | null> {
 }
 
 export async function sendMagicLink(email: string) {
-  const res = await fetch(`${API_URL}/v1/auth/magic-link`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
-  return { ok: res.ok, status: res.status };
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/v1/auth/magic-link`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+  } catch {
+    return { ok: false, status: 0, error: "Sem conexão. Verifique sua internet e tente novamente." };
+  }
+
+  if (res.ok) return { ok: true as const, status: res.status };
+
+  let error = "Não foi possível enviar o link. Tente novamente em alguns instantes.";
+  try {
+    const body = await res.json();
+    const detail = body?.detail;
+    if (typeof detail === "string") {
+      error = detail;
+    } else if (detail && typeof detail === "object") {
+      if (typeof detail.erro === "string") error = detail.erro;
+      else if (Array.isArray(detail) && detail[0]?.msg) error = String(detail[0].msg);
+    }
+  } catch {
+    // body was not JSON; keep the generic message
+  }
+
+  return { ok: false as const, status: res.status, error };
 }
 
 export async function verifyMagicLink(token: string) {

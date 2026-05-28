@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     email_from: str = "Maracatu <noreply@maracatu.org>"
 
-    magic_link_email_limit_hour: int = 3
-    magic_link_ip_limit_hour: int = 10
+    magic_link_email_limit_hour: int = 8
+    magic_link_ip_limit_hour: int = 30
 
     token_quota_daily_input: int = 200_000
     token_quota_daily_output: int = 50_000
