@@ -11,16 +11,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await fetchSharedChat(id);
 
   if (!data) {
-    return { title: "Consulta não encontrada — Maracatu" };
+    return { title: "Consulta não encontrada | Maracatu" };
   }
 
   const description = "Consulta pública sobre gastos públicos gerada pela Calunga, guardiã do dinheiro público do Maracatu.";
 
   return {
-    title: `${data.chat.title} — Maracatu`,
+    title: `${data.chat.title} | Maracatu`,
     description,
-    openGraph: { title: `${data.chat.title} — Maracatu`, description, type: "article" },
-    twitter: { card: "summary", title: `${data.chat.title} — Maracatu`, description },
+    openGraph: { title: `${data.chat.title} | Maracatu`, description, type: "article" },
+    twitter: { card: "summary", title: `${data.chat.title} | Maracatu`, description },
   };
 }
 

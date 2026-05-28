@@ -4,7 +4,7 @@ import { Shield, Database, Search, AlertTriangle, Globe, GitBranch, ExternalLink
 import { fetchFeed } from "@/lib/actions";
 
 export const metadata: Metadata = {
-  title: "Maracatu — Controle social dos gastos públicos, no ritmo do povo",
+  title: "Maracatu | Controle social dos gastos públicos, no ritmo do povo",
   description: "Pergunte em linguagem natural como o dinheiro público está sendo gasto e receba respostas claras, com dados, fontes oficiais e alertas de irregularidades.",
 };
 
@@ -320,7 +320,7 @@ export default async function HomePage() {
 
         {}
         <footer className="text-center text-xs text-zinc-400 dark:text-zinc-500 pt-8 pb-12 border-t border-zinc-100 dark:border-zinc-800">
-          <p>Maracatu — Controle social da administração pública brasileira, no ritmo do povo.</p>
+          <p>Maracatu, controle social da administração pública brasileira, no ritmo do povo.</p>
         </footer>
       </main>
     </div>
