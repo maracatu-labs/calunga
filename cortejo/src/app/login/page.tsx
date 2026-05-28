@@ -9,14 +9,16 @@ export default function Login() {
   const [sent, setSent] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
 
-  const [, formAction, isPending] = useActionState(async (_prev: unknown, formData: FormData) => {
-    const email = formData.get("email") as string;
-    if (!email) return;
+  const [errorMessage, formAction, isPending] = useActionState<string | null, FormData>(async (_prev, formData) => {
+    const email = (formData.get("email") as string)?.trim();
+    if (!email) return "Informe um e-mail válido.";
     const result = await sendMagicLink(email);
     if (result.ok) {
       setSentEmail(email);
       setSent(true);
+      return null;
     }
+    return result.error ?? "Não foi possível enviar o link. Tente novamente em alguns instantes.";
   }, null);
 
   return (
@@ -52,6 +54,15 @@ export default function Login() {
             >
               {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Continuar"}
             </button>
+            {errorMessage && (
+              <p
+                role="alert"
+                aria-live="polite"
+                className="text-center text-sm text-red-600 dark:text-red-400 mt-2"
+              >
+                {errorMessage}
+              </p>
+            )}
             <p className="text-center text-sm text-zinc-500 dark:text-zinc-400 mt-4">
               Insira seu e-mail para acompanhar os gastos públicos.
             </p>
