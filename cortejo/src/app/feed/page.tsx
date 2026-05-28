@@ -5,7 +5,7 @@ import { getFeed } from "@/lib/feed-api";
 import FeedList from "./feed-list";
 
 export const metadata: Metadata = {
-  title: "Feed | Maracatu",
+  title: "Maracatu - Feed",
   description: "Acompanhe em tempo real as irregularidades, votações e emendas detectadas automaticamente pelo Maracatu.",
 };
 

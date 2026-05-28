@@ -22,9 +22,9 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const evento = await getFeedEvento(Number(id));
-  if (!evento) return { title: "Evento não encontrado | Maracatu" };
+  if (!evento) return { title: "Maracatu - Evento não encontrado" };
   return {
-    title: `${evento.titulo} | Feed Maracatu`,
+    title: `Maracatu - ${evento.titulo}`,
     description: evento.descricao?.slice(0, 160),
   };
 }
