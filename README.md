@@ -44,7 +44,10 @@ Calunga is part of the **Maracatu** project ([maracatu.org](https://maracatu.org
 | Cache | Redis 7 |
 | Pipeline | Dagster + Celery Beat |
 | ML | scikit-learn (K-Means) |
-| Infra | Docker Compose, Caddy (auto-SSL) |
+| Reverse proxy | Traefik v3 (label-based routing) |
+| Public ingress | Cloudflare Tunnel (no inbound ports on the host) |
+| Error capture | Sentry (optional) |
+| Backups | `pg_dump` → Cloudflare R2 (S3-compatible, optional) |
 
 ## Data sources
 
@@ -66,7 +69,7 @@ git clone git@github.com:maracatu-labs/calunga.git
 cd calunga
 
 cp .env.example .env
-# preencha GOOGLE_API_KEY (obrigatório) e TRANSPARENCIA_API_TOKEN (opcional)
+# fill GOOGLE_API_KEY (required) and TRANSPARENCIA_API_TOKEN (optional)
 
 make dev
 ```
@@ -97,11 +100,72 @@ calunga/
 │   ├── pipeline/    # Dagster assets (Baque)
 │   ├── migrations/  # Plain SQL (yoyo-migrations)
 │   └── tests/       # pytest
+├── infra/
+│   ├── edge/        # Traefik + cloudflared (single public ingress)
+│   └── backup/      # Postgres → R2 backup notes
 ├── scripts/         # Operational utilities
 ├── docker-compose.yml
-├── Makefile
-└── Caddyfile
+└── Makefile
 ```
+
+## Production deployment
+
+Calunga at [maracatu.org](https://maracatu.org) runs on a self-hosted Linux host fronted by Cloudflare Tunnel — no inbound ports on the network, TLS terminated at Cloudflare.
+
+```
+                  Internet
+                      │  (TLS at Cloudflare)
+                      ▼
+            ┌─────────────────────┐
+            │  Cloudflare Tunnel  │  cloudflared (outbound only)
+            └──────────┬──────────┘
+                       │
+                       ▼
+            ┌─────────────────────┐
+            │      Traefik        │  reverse-proxy (routes by labels)
+            └──────────┬──────────┘
+                       │
+       ┌───────────────┼───────────────┐
+       ▼               ▼               ▼
+   ┌────────┐     ┌────────┐      ┌────────┐
+   │  web   │     │  api   │      │   db   │
+   │ (3000) │     │ (8000) │      │ (5432) │
+   └────────┘     └────────┘      └────────┘
+```
+
+The host directory layout is:
+
+```
+/srv/
+├── edge/        # Traefik + cloudflared (this stack creates the edge_proxy network)
+├── calunga/     # Application stack (this repo)
+└── backups/     # Local pg_dump snapshots
+```
+
+Bootstrap:
+
+```bash
+# Edge first (one-time)
+cd /srv/edge
+cp .env.example .env  # fill CLOUDFLARE_TUNNEL_TOKEN
+docker network create edge_proxy
+docker compose up -d
+
+# Then the application
+cd /srv/calunga
+cp .env.example .env  # fill secrets, set APP_ENV=production, CALUNGA_HOST=...
+docker compose up -d
+```
+
+In `production`, the API refuses to start with the default `JWT_SECRET`. Generate one with `openssl rand -hex 32`. See [`infra/edge/README.md`](infra/edge/README.md) for the Cloudflare side and [`infra/backup/README.md`](infra/backup/README.md) for off-site backups.
+
+### Hardening summary
+
+- All container ports bind to `127.0.0.1` (only Traefik exposes 80 inside `edge_proxy`)
+- `cap_drop: [ALL]` + `no-new-privileges` on every service
+- API enforces `JWT_SECRET` strength in production, daily Gemini token quotas per user, magic-link rate limits per email and per IP, message-size caps, and a hardened LLM system prompt against indirect prompt injection
+- Frontend ships strict CSP, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy and Permissions-Policy headers, plus `rehype-sanitize` on rendered chat markdown
+- Optional Sentry capture (server + client) gated by DSN envs
 
 ## Contributing
 

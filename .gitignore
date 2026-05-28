@@ -33,7 +33,7 @@ cortejo/tsconfig.tsbuildinfo
 # Claude Code (local-only)
 .claude/
 
-# Internal docs (not part of OSS release)
+# Local-only notes (not part of OSS release)
 docs/
 
 # IDE
