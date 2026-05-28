@@ -5,7 +5,7 @@ import { getFeed } from "@/lib/feed-api";
 import FeedList from "./feed-list";
 
 export const metadata: Metadata = {
-  title: "Feed — Maracatu",
+  title: "Feed | Maracatu",
   description: "Acompanhe em tempo real as irregularidades, votações e emendas detectadas automaticamente pelo Maracatu.",
 };
 
@@ -113,7 +113,7 @@ export default async function FeedPage({ searchParams }: Props) {
 
       {}
       <footer className="max-w-3xl mx-auto px-4 sm:px-6 text-center text-xs text-zinc-400 dark:text-zinc-500 pt-8 pb-12 border-t border-zinc-100 dark:border-zinc-800">
-        <p>Maracatu — Controle social da administração pública brasileira, no ritmo do povo.</p>
+        <p>Maracatu, controle social da administração pública brasileira, no ritmo do povo.</p>
       </footer>
     </div>
   );

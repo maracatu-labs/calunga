@@ -57,7 +57,7 @@ HTML_TEMPLATE = """\
             </td>
           </tr>
         </table>
-        <p style="font-size:12px; color:#a1a1aa; margin:16px 0 0;">Maracatu — controle social no ritmo do povo.</p>
+        <p style="font-size:12px; color:#a1a1aa; margin:16px 0 0;">Maracatu, controle social no ritmo do povo.</p>
       </td>
     </tr>
   </table>
@@ -74,7 +74,7 @@ Clique no link abaixo para entrar na sua conta. Este link expira em 15 minutos.
 
 Se você não solicitou este acesso, ignore este email. Ninguém entrará na sua conta sem clicar no link.
 
-Maracatu — controle social no ritmo do povo.
+Maracatu, controle social no ritmo do povo.
 """
 
 async def enviar_magic_link(email: str, token: str) -> None:

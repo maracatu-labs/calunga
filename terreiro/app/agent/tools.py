@@ -160,7 +160,7 @@ async def buscar_despesas(
     """Busca despesas (gastos) de parlamentares. Use para responder perguntas sobre quanto um deputado ou senador gastou."""
     pool = get_pool()
 
-    fonte = "CEAP — Câmara dos Deputados / Senado Federal (dados abertos)"
+    fonte = "CEAP, Câmara dos Deputados / Senado Federal (dados abertos)"
     filtros = {"nome": nome, "deputado_id": deputado_id, "ano": ano, "mes": mes, "categoria": categoria}
 
     resumo = await despesas_q.resumo_despesas(
@@ -217,7 +217,7 @@ async def ranking_despesas(
     """Ranking dos parlamentares que mais gastaram. Use para comparar gastos entre parlamentares ou responder 'quem mais gastou'. Filtre por tipo='senador' para senadores ou tipo='deputado' para deputados."""
     pool = get_pool()
 
-    fonte = "CEAP — Câmara dos Deputados / Senado Federal (dados abertos)"
+    fonte = "CEAP, Câmara dos Deputados / Senado Federal (dados abertos)"
     filtros = {"tipo": tipo, "ano": ano, "categoria": categoria, "uf": uf, "partido": partido}
 
     rows = await despesas_q.ranking_deputados_por_gasto(
@@ -327,7 +327,7 @@ async def listar_executivos(
     """
     params: list = []
 
-    fonte = "TSE — Eleições 2022 e 2024 (dados abertos)"
+    fonte = "TSE, Eleições 2022 e 2024 (dados abertos)"
     filtros = {"cargo": cargo, "uf": uf, "partido": partido, "nome": nome}
 
     if cargo:
@@ -398,7 +398,7 @@ async def buscar_suspeitas(
     """Busca despesas sinalizadas como suspeitas. Use para responder sobre irregularidades ou anomalias detectadas."""
     pool = get_pool()
 
-    fonte = "Classificadores do Gonguê — Maracatu"
+    fonte = "Classificadores do Gonguê (Maracatu)"
     filtros = {"nome": nome, "classificador": classificador, "ano": ano}
 
     rows = await suspeitas_q.listar_suspeitas(
@@ -459,7 +459,7 @@ async def consultar_recibo(despesa_id: int) -> str:
         WHERE s.despesa_id = $1 AND s.classificador = 'ocr_recibo'
         LIMIT 1
     """
-    fonte = "OCR + análise LLM de recibo CEAP — Maracatu"
+    fonte = "OCR + análise LLM de recibo CEAP (Maracatu)"
     row = await pool.fetchrow(query, despesa_id)
 
     if not row:
@@ -648,7 +648,7 @@ async def buscar_similar(texto: str) -> str:
     from app.services.embeddings import generate_embedding
 
     pool = get_pool()
-    fonte = "Busca semântica multi-base — Maracatu"
+    fonte = "Busca semântica multi-base (Maracatu)"
 
     embedding = await generate_embedding(texto)
     results = await busca_universal(pool, texto, embedding, limit=10)
@@ -671,7 +671,7 @@ class ExplicarTermoInput(BaseModel):
 
 @tool(args_schema=ExplicarTermoInput)
 async def explicar_termo(termo: str) -> str:
-    """Consulta o glossário de termos orçamentários, fiscais e de transparência do Maracatu. Use quando o usuário perguntar 'o que é X' sobre conceitos como LOA, LDO, PPA, RCL, CEAP, CPGF, Emenda Pix, Empenho, Liquidação, CEIS, CNEP, RREO, RGF, SICONFI, etc. Aceita sinônimos ('cartão corporativo' acha CPGF, 'cota parlamentar' acha CEAP, 'orçamento secreto' acha Emenda de Relator). Sempre prefira essa tool a responder de memória em perguntas conceituais — as definições aqui vêm de fontes oficiais (Tesouro, Câmara, Senado) e trazem URL de referência."""
+    """Consulta o glossário de termos orçamentários, fiscais e de transparência do Maracatu. Use quando o usuário perguntar 'o que é X' sobre conceitos como LOA, LDO, PPA, RCL, CEAP, CPGF, Emenda Pix, Empenho, Liquidação, CEIS, CNEP, RREO, RGF, SICONFI, etc. Aceita sinônimos ('cartão corporativo' acha CPGF, 'cota parlamentar' acha CEAP, 'orçamento secreto' acha Emenda de Relator). Sempre prefira essa tool a responder de memória em perguntas conceituais. As definições aqui vêm de fontes oficiais (Tesouro, Câmara, Senado) e trazem URL de referência."""
     pool = get_pool()
     fonte = "Glossário Maracatu (fontes oficiais)"
 
@@ -778,7 +778,7 @@ async def buscar_cpgf(
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
     filtros_aplicados = _filtros_limpos({"orgao": orgao, "ano": ano, "mes": mes, "portador": portador})
-    fonte = "CPGF — Portal da Transparência (dados abertos)"
+    fonte = "CPGF, Portal da Transparência (dados abertos)"
     aviso_vazio = "Nenhum gasto CPGF encontrado com os filtros informados."
 
     if agrupar_por:
@@ -881,7 +881,7 @@ async def buscar_contratos(
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
     filtros_aplicados = _filtros_limpos({"orgao": orgao, "fornecedor": fornecedor, "cnpj": cnpj})
-    fonte = "Portal da Transparência — Contratos Federais (dados abertos)"
+    fonte = "Portal da Transparência, Contratos Federais (dados abertos)"
     aviso_vazio = "Nenhum contrato encontrado com os filtros informados."
 
     if agrupar_por:
@@ -984,7 +984,7 @@ async def buscar_viagens(
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
     filtros_aplicados = _filtros_limpos({"orgao": orgao, "viajante": viajante, "ano": ano})
-    fonte = "Portal da Transparência — Viagens a Serviço (dados abertos)"
+    fonte = "Portal da Transparência, Viagens a Serviço (dados abertos)"
     aviso_vazio = "Nenhuma viagem encontrada com os filtros informados."
     soma_total = "COALESCE(valor_passagens,0) + COALESCE(valor_diarias,0) + COALESCE(valor_outros,0)"
 
@@ -1080,7 +1080,7 @@ async def buscar_emendas(
     tipo: str | None = None,
     agrupar_por: str | None = None,
 ) -> str:
-    """Busca emendas parlamentares e sua execução. Inclui emendas Pix (Transferências Especiais — dinheiro enviado direto a estados/municípios sem convênio nem prestação de contas detalhada). Use tipo='pix' para filtrar emendas Pix, tipo='relator' para orçamento secreto. Para rankings do tipo "quais parlamentares apresentaram mais emendas" ou "onde as emendas Pix foram mais direcionadas", use agrupar_por."""
+    """Busca emendas parlamentares e sua execução. Inclui emendas Pix (Transferências Especiais: dinheiro enviado direto a estados/municípios sem convênio nem prestação de contas detalhada). Use tipo='pix' para filtrar emendas Pix, tipo='relator' para orçamento secreto. Para rankings do tipo "quais parlamentares apresentaram mais emendas" ou "onde as emendas Pix foram mais direcionadas", use agrupar_por."""
     pool = get_pool()
 
     params: list = []
@@ -1101,7 +1101,7 @@ async def buscar_emendas(
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
     filtros_aplicados = _filtros_limpos({"autor": autor, "ano": ano, "localidade": localidade, "tipo": tipo})
-    fonte = "Portal da Transparência — Emendas Parlamentares (dados abertos)"
+    fonte = "Portal da Transparência, Emendas Parlamentares (dados abertos)"
     aviso_vazio = "Nenhuma emenda encontrada com os filtros informados."
 
     if agrupar_por:
@@ -1210,7 +1210,7 @@ async def buscar_dados_fiscais(
         query += f" AND df.demonstrativo = ${len(params)}"
 
     query += " ORDER BY df.exercicio DESC, df.periodo DESC, df.valor DESC NULLS LAST LIMIT 30"
-    fonte = "SICONFI — Tesouro Nacional (dados abertos)"
+    fonte = "SICONFI, Tesouro Nacional (dados abertos)"
     filtros = {"ente": ente, "exercicio": exercicio, "demonstrativo": demonstrativo}
     rows = await pool.fetch(query, *params)
 
@@ -1274,7 +1274,7 @@ async def buscar_despesas_federais(
         query += f" AND ano = ${len(params)}"
 
     query += " GROUP BY orgao_superior_nome, orgao_vinculado_nome, ano ORDER BY empenhado DESC NULLS LAST LIMIT 20"
-    fonte = "Portal da Transparência — Execução Orçamentária Federal (dados abertos)"
+    fonte = "Portal da Transparência, Execução Orçamentária Federal (dados abertos)"
     filtros = {"orgao": orgao, "ano": ano}
     rows = await pool.fetch(query, *params)
 
@@ -1362,14 +1362,14 @@ async def buscar_votacoes(
     2. VER COMO UM PARLAMENTAR VOTOU: passe parlamentar (nome).
     3. LISTAR QUEM VOTOU DE UM JEITO ESPECÍFICO em uma proposição: passe tipo_proposicao + numero_proposicao + ano + voto.
        Exemplos: 'quem votou contra o PL 3802/2024', 'deputados que votaram a favor da PEC 45/2024',
-       'quem se absteve no PLP 68/2024'. NÃO responda que não consegue — esta tool retorna a lista completa
+       'quem se absteve no PLP 68/2024'. NÃO responda que não consegue, esta tool retorna a lista completa
        de parlamentares (nome, partido, UF) para o voto especificado.
     4. BUSCAR uma proposição específica: passe tipo_proposicao + numero_proposicao + ano (sem voto).
 
     Valores válidos para 'voto': 'Sim', 'Não', 'Abstenção', 'Obstrução'.
     """
     pool = get_pool()
-    fonte = "Dados Abertos — Câmara dos Deputados / Senado Federal"
+    fonte = "Dados Abertos, Câmara dos Deputados / Senado Federal"
     filtros_base = {
         "tipo_proposicao": tipo_proposicao,
         "numero_proposicao": numero_proposicao,
@@ -1435,7 +1435,7 @@ async def buscar_votacoes(
 
         return json.dumps({
             "modo": "parlamentares_por_voto",
-            "resumo": f"{tipo_proposicao.upper()} {numero_proposicao}{f'/{ano}' if ano else ''} — voto '{voto}'",
+            "resumo": f"{tipo_proposicao.upper()} {numero_proposicao}{f'/{ano}' if ano else ''}: voto '{voto}'",
             "votacoes": list(votacoes_dict.values()),
             "total_parlamentares": len(rows),
             "filtros": _filtros_limpos(filtros_base),
