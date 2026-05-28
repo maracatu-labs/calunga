@@ -1,11 +1,13 @@
 """Testes dos services (mock HTTP)."""
 
-import pytest
-import httpx
 from unittest.mock import AsyncMock
 
+import httpx
+import pytest
+
 from app.services.camara import CamaraService
-from app.services.senado import SenadoService, _text, _int_or_none, _float_or_none
+from app.services.senado import SenadoService, _float_or_none, _int_or_none, _text
+
 
 class TestCamaraService:
     @pytest.mark.asyncio

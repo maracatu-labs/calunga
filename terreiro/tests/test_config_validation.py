@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from app.config import Settings
 
+
 class TestJwtSecretValidation:
     def test_development_accepts_default_secret(self, monkeypatch):
         monkeypatch.setenv("APP_ENV", "development")

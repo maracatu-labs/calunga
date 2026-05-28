@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import asyncpg
 
+
 @dataclass
 class Suspeita:
     despesa_id: int

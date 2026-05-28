@@ -7,6 +7,7 @@ from fastapi import HTTPException
 
 from app.routers import auth as auth_router
 
+
 class TestEnforceMagicLinkLimit:
     @pytest.mark.asyncio
     async def test_passes_within_limit(self, monkeypatch):

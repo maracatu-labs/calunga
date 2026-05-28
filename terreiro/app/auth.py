@@ -8,6 +8,7 @@ from fastapi import HTTPException, Request
 
 from app.config import settings
 
+
 def criar_jwt(user_id: uuid.UUID, email: str) -> str:
     """Cria um JWT assinado com HS256, válido por 7 dias."""
     payload = {
@@ -32,7 +33,7 @@ async def get_current_user(request: Request) -> dict:
     try:
         payload = decodificar_jwt(token)
         return {"id": payload["sub"], "email": payload["email"]}
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expirado")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Token inválido")
+    except jwt.ExpiredSignatureError as err:
+        raise HTTPException(status_code=401, detail="Token expirado") from err
+    except jwt.InvalidTokenError as err:
+        raise HTTPException(status_code=401, detail="Token inválido") from err

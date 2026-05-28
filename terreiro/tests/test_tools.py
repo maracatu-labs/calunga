@@ -15,6 +15,7 @@ import pytest
 
 from tests.conftest import record
 
+
 async def _invoke(tool, **kwargs) -> dict:
     """Helper: chama a tool (LangChain @tool) e desserializa o retorno."""
     result = await tool.ainvoke(kwargs)

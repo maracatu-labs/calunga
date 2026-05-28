@@ -32,11 +32,29 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
+    "ruff>=0.7.0",
 ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = [".venv", "build", "dist"]
+
+[tool.ruff.lint]
+# Start conservative: pyflakes (F), isort (I), bug-prone patterns (B),
+# unused/star imports (W). Stylistic-only rules left out for now so the
+# first run does not flag the whole codebase.
+select = ["F", "I", "B", "W"]
+ignore = [
+    "B008",  # function call in default arg — common with FastAPI Depends()
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["F401", "F811"]  # fixtures often look unused
 
 [tool.dagster]
 module_name = "pipeline.definitions"

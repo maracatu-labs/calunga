@@ -45,6 +45,7 @@ def _run_async(coro):
 
 async def _create_pool(min_size=1, max_size=5):
     import asyncpg
+
     from app.config import settings
     return await asyncpg.create_pool(dsn=settings.database_url, min_size=min_size, max_size=max_size)
 
@@ -52,10 +53,11 @@ async def _create_pool(min_size=1, max_size=5):
 def parlamentares_camara(context: AssetExecutionContext):
     async def run():
         import httpx
+
         from app.config import settings
-        from app.services.camara import CamaraService
         from app.queries.parlamentares import upsert_parlamentar
         from app.queries.raw_ingestao import inserir_raw
+        from app.services.camara import CamaraService
 
         pool = await _create_pool()
         try:
@@ -86,11 +88,12 @@ def parlamentares_camara(context: AssetExecutionContext):
 def despesas_camara(context: AssetExecutionContext):
     async def run():
         import httpx
+
         from app.config import settings
-        from app.services.camara import CamaraService
-        from app.queries.parlamentares import upsert_parlamentar
         from app.queries.despesas import upsert_despesa
+        from app.queries.parlamentares import upsert_parlamentar
         from app.queries.raw_ingestao import inserir_raw
+        from app.services.camara import CamaraService
 
         def _to_int(val, default=None):
             if val is None or val == "":
@@ -184,8 +187,9 @@ def despesas_camara(context: AssetExecutionContext):
 def senado(context: AssetExecutionContext):
     async def run():
         import httpx
-        from app.queries.parlamentares import upsert_parlamentar
+
         from app.queries.despesas import upsert_despesa
+        from app.queries.parlamentares import upsert_parlamentar
         from app.queries.raw_ingestao import inserir_raw
         from app.services.senado import SenadoService
 
@@ -267,7 +271,6 @@ def empresas_cnpj(context: AssetExecutionContext):
         import re
         import zipfile
         from pathlib import Path
-        from xml.etree import ElementTree
 
         import httpx
 
@@ -520,6 +523,7 @@ def empresas_cnpj(context: AssetExecutionContext):
 def sancoes(context: AssetExecutionContext):
     async def run():
         import httpx
+
         from app.config import settings
         from app.services.transparencia import TransparenciaService
 
@@ -718,16 +722,18 @@ def candidatos_tse(context: AssetExecutionContext):
 def suspeitas(context: AssetExecutionContext):
     async def run():
         from app.classifiers.cnpj_cpf_invalido import CNPJCPFInvalido
-        from app.classifiers.limite_subcota import LimiteSubcotaMensal
-        from app.classifiers.empresa_irregular import EmpresaIrregular
         from app.classifiers.despesa_eleitoral import DespesaEleitoral
         from app.classifiers.despesa_fim_de_semana import DespesaFimDeSemana
-        from app.classifiers.preco_refeicao import PrecoRefeicaoAnomalo
+        from app.classifiers.empresa_irregular import EmpresaIrregular
         from app.classifiers.explicacoes import (
             criterios as criterios_do_classificador,
+        )
+        from app.classifiers.explicacoes import (
             gerar_titulo_narrativo,
             motivo_humano,
         )
+        from app.classifiers.limite_subcota import LimiteSubcotaMensal
+        from app.classifiers.preco_refeicao import PrecoRefeicaoAnomalo
         from app.queries.feed import publicar_evento
         from app.schemas.feed import Acao, Ator, Contexto, Evidencia, Objeto
         from app.services.feed_enrichment import (
@@ -735,9 +741,9 @@ def suspeitas(context: AssetExecutionContext):
             construir_dados_ricos,
             formatar_brl,
             formatar_cnpj,
+            link_busca_cnpj,
             link_camara_deputado,
             link_portal_transparencia_sancao,
-            link_busca_cnpj,
             link_recibo,
             link_senado_senador,
         )
@@ -1000,7 +1006,7 @@ def embeddings(context: AssetExecutionContext):
                 batch = rows[i:i + BATCH_SIZE]
                 texts = [to_text_fn(r) for r in batch]
                 embs = await generate_embeddings_batch(texts)
-                for row, text, emb in zip(batch, texts, embs):
+                for row, text, emb in zip(batch, texts, embs, strict=False):
                     if emb is None:
                         continue
                     await pool.execute(
@@ -1220,7 +1226,7 @@ def embeddings_glossario(context: AssetExecutionContext):
             texts = [f"{r['termo']}: {r['definicao']}" for r in rows]
             embs = await generate_embeddings_batch(texts)
             total = 0
-            for row, emb in zip(rows, embs):
+            for row, emb in zip(rows, embs, strict=False):
                 if emb is None:
                     continue
                 await pool.execute(
@@ -1238,7 +1244,7 @@ def embeddings_glossario(context: AssetExecutionContext):
 def feed_eventos_dagster(context: AssetExecutionContext):
     async def run():
         from app.queries.feed import publicar_evento
-        from app.schemas.feed import Acao, Ator, Contexto, Evidencia, Objeto, Severidade
+        from app.schemas.feed import Acao, Ator, Contexto, Objeto, Severidade
         from app.services.feed_enrichment import (
             construir_dados_ricos,
             formatar_brl,
@@ -1462,11 +1468,13 @@ ORGAOS_FEDERAIS = {
 @asset(retry_policy=_API_RETRY_POLICY, group_name="federal", description="Gastos do cartão corporativo (CPGF) do executivo federal")
 def cpgf_federal(context: AssetExecutionContext):
     async def run():
-        import httpx
         from datetime import date
+
+        import httpx
+
         from app.config import settings
-        from app.services.transparencia import TransparenciaService
         from app.queries.federal import upsert_cpgf
+        from app.services.transparencia import TransparenciaService
 
         def _clean_doc(val):
             if not val:
@@ -1545,11 +1553,12 @@ def cpgf_federal(context: AssetExecutionContext):
 @asset(retry_policy=_API_RETRY_POLICY, group_name="federal", description="Execução orçamentária federal (empenhos, liquidações, pagamentos)")
 def despesas_federais(context: AssetExecutionContext):
     async def run():
+
         import httpx
-        from datetime import date
+
         from app.config import settings
-        from app.services.transparencia import TransparenciaService
         from app.queries.federal import upsert_despesa_orcamentaria
+        from app.services.transparencia import TransparenciaService
 
         pool = await _create_pool()
         try:
@@ -1605,11 +1614,12 @@ def despesas_federais(context: AssetExecutionContext):
 @asset(retry_policy=_API_RETRY_POLICY, group_name="federal", description="Contratos do executivo federal")
 def contratos_federais(context: AssetExecutionContext):
     async def run():
+
         import httpx
-        from datetime import date
+
         from app.config import settings
-        from app.services.transparencia import TransparenciaService
         from app.queries.federal import upsert_contrato
+        from app.services.transparencia import TransparenciaService
 
         pool = await _create_pool()
         try:
@@ -1664,11 +1674,13 @@ def contratos_federais(context: AssetExecutionContext):
 def licitacoes_federais(context: AssetExecutionContext):
     async def run():
         import calendar
-        import httpx
         from datetime import date
+
+        import httpx
+
         from app.config import settings
-        from app.services.transparencia import TransparenciaService
         from app.queries.federal import upsert_licitacao
+        from app.services.transparencia import TransparenciaService
 
         ano_atual = date.today().year
         anos = _anos_federais_janela()
@@ -1731,12 +1743,14 @@ def licitacoes_federais(context: AssetExecutionContext):
 @asset(retry_policy=_API_RETRY_POLICY, group_name="federal", description="Viagens a serviço do executivo federal")
 def viagens_federais(context: AssetExecutionContext):
     async def run():
-        import httpx
         import calendar
         from datetime import date
+
+        import httpx
+
         from app.config import settings
-        from app.services.transparencia import TransparenciaService
         from app.queries.federal import upsert_viagem
+        from app.services.transparencia import TransparenciaService
 
         ano_atual = date.today().year
         pool = await _create_pool()
@@ -1795,13 +1809,13 @@ def viagens_federais(context: AssetExecutionContext):
 @asset(retry_policy=_API_RETRY_POLICY, group_name="federal", description="Emendas parlamentares (execução orçamentária)")
 def emendas_parlamentares(context: AssetExecutionContext):
     async def run():
-        import httpx
-        from datetime import date
-        from app.config import settings
-        from app.services.transparencia import TransparenciaService
-        from app.queries.federal import upsert_emenda
 
-        ano_atual = date.today().year
+        import httpx
+
+        from app.config import settings
+        from app.queries.federal import upsert_emenda
+        from app.services.transparencia import TransparenciaService
+
         pool = await _create_pool()
         try:
             async with httpx.AsyncClient(
@@ -1865,9 +1879,10 @@ CAPITAIS_IBGE = {
 def fiscal_estados(context: AssetExecutionContext):
     async def run():
         from datetime import date
-        from app.services.siconfi import SiconfiService
-        from app.queries.federal import upsert_dado_fiscal
+
         from app.queries.entes import buscar_ente_por_ibge
+        from app.queries.federal import upsert_dado_fiscal
+        from app.services.siconfi import SiconfiService
 
         pool = await _create_pool()
         try:
@@ -1926,9 +1941,10 @@ def fiscal_estados(context: AssetExecutionContext):
 def fiscal_capitais(context: AssetExecutionContext):
     async def run():
         from datetime import date
-        from app.services.siconfi import SiconfiService
-        from app.queries.federal import upsert_dado_fiscal
+
         from app.queries.entes import buscar_ente_por_ibge
+        from app.queries.federal import upsert_dado_fiscal
+        from app.services.siconfi import SiconfiService
 
         pool = await _create_pool()
         try:
@@ -1987,8 +2003,8 @@ def fiscal_capitais(context: AssetExecutionContext):
 def governadores_prefeitos(context: AssetExecutionContext):
     """Insere governadores e prefeitos com base nos dados do TSE (eleições 2022/2024)."""
     async def run():
-        from app.queries.parlamentares import upsert_parlamentar
         from app.queries.entes import buscar_ente_por_ibge
+        from app.queries.parlamentares import upsert_parlamentar
 
         pool = await _create_pool()
         try:
@@ -2002,7 +2018,7 @@ def governadores_prefeitos(context: AssetExecutionContext):
                 ORDER BY uf, ano_eleicao DESC"""
             )
             for g in govs:
-                ente = await buscar_ente_por_ibge(pool, "")
+                await buscar_ente_por_ibge(pool, "")
 
                 ente_row = await pool.fetchrow(
                     "SELECT id FROM entes WHERE tipo = 'estado' AND uf = $1", g["uf"]
@@ -2026,7 +2042,7 @@ def governadores_prefeitos(context: AssetExecutionContext):
                 )
             context.log.info(f"{len(govs)} governadores inseridos")
 
-            for ibge, nome_capital in CAPITAIS_IBGE.items():
+            for ibge, _nome_capital in CAPITAIS_IBGE.items():
                 ente_row = await pool.fetchrow(
                     "SELECT id, uf FROM entes WHERE ibge_codigo = $1", ibge
                 )
@@ -2070,11 +2086,13 @@ def governadores_prefeitos(context: AssetExecutionContext):
 @asset(retry_policy=_API_RETRY_POLICY, group_name="votacoes", description="Votações nominais da Câmara dos Deputados + votos individuais")
 def votacoes_camara(context: AssetExecutionContext):
     async def run():
-        import httpx
         from datetime import date, timedelta
+
+        import httpx
+
         from app.config import settings
+        from app.queries.votacoes import upsert_orientacao, upsert_proposicao, upsert_votacao, upsert_voto
         from app.services.camara import CamaraService
-        from app.queries.votacoes import upsert_proposicao, upsert_votacao, upsert_voto, upsert_orientacao
 
         pool = await _create_pool()
         try:
@@ -2196,10 +2214,12 @@ def votacoes_camara(context: AssetExecutionContext):
 @asset(retry_policy=_API_RETRY_POLICY, group_name="votacoes", description="Votações nominais do Senado Federal + votos individuais")
 def votacoes_senado(context: AssetExecutionContext):
     async def run():
-        import httpx
         from datetime import datetime
-        from app.services.senado import SenadoService
+
+        import httpx
+
         from app.queries.votacoes import upsert_proposicao, upsert_votacao, upsert_voto
+        from app.services.senado import SenadoService
 
         pool = await _create_pool()
         try:
@@ -2280,11 +2300,12 @@ def backfill_despesas_camara(context: AssetExecutionContext):
     """Carrega despesas CEAP de 2024-2025. Rodar uma vez após deploy."""
     async def run():
         import httpx
+
         from app.config import settings
-        from app.services.camara import CamaraService
-        from app.queries.parlamentares import upsert_parlamentar
         from app.queries.despesas import upsert_despesa
+        from app.queries.parlamentares import upsert_parlamentar
         from app.queries.raw_ingestao import inserir_raw
+        from app.services.camara import CamaraService
 
         def _to_int(val, default=None):
             try: return int(val) if val not in (None, "") else default
@@ -2363,8 +2384,9 @@ def backfill_despesas_camara(context: AssetExecutionContext):
 def backfill_senado(context: AssetExecutionContext):
     async def run():
         import httpx
-        from app.queries.parlamentares import upsert_parlamentar
+
         from app.queries.despesas import upsert_despesa
+        from app.queries.parlamentares import upsert_parlamentar
         from app.queries.raw_ingestao import inserir_raw
         from app.services.senado import SenadoService
 
@@ -2430,11 +2452,16 @@ def backfill_senado(context: AssetExecutionContext):
 @asset(retry_policy=_API_RETRY_POLICY, group_name="backfill", description="Backfill: dados federais 2024-2025 (CPGF, despesas, contratos, licitações, viagens, emendas)")
 def backfill_federal(context: AssetExecutionContext):
     async def run():
+
         import httpx
-        import calendar
+
         from app.config import settings
+        from app.queries.federal import (
+            upsert_contrato,
+            upsert_despesa_orcamentaria,
+            upsert_emenda,
+        )
         from app.services.transparencia import TransparenciaService
-        from app.queries.federal import upsert_cpgf, upsert_despesa_orcamentaria, upsert_contrato, upsert_licitacao, upsert_viagem, upsert_emenda
 
         pool = await _create_pool()
         try:
@@ -2535,11 +2562,13 @@ def backfill_federal(context: AssetExecutionContext):
 def backfill_votacoes_camara(context: AssetExecutionContext):
     async def run():
         import re
-        import httpx
         from datetime import datetime
+
+        import httpx
+
         from app.config import settings
+        from app.queries.votacoes import upsert_orientacao, upsert_proposicao, upsert_votacao, upsert_voto
         from app.services.camara import CamaraService
-        from app.queries.votacoes import upsert_proposicao, upsert_votacao, upsert_voto, upsert_orientacao
 
         pool = await _create_pool()
         try:
@@ -2636,9 +2665,9 @@ def backfill_votacoes_camara(context: AssetExecutionContext):
 @asset(retry_policy=_API_RETRY_POLICY, group_name="backfill", description="Backfill: dados fiscais SICONFI 2024-2025 (estados + capitais)")
 def backfill_fiscal(context: AssetExecutionContext):
     async def run():
-        from app.services.siconfi import SiconfiService
-        from app.queries.federal import upsert_dado_fiscal
         from app.queries.entes import buscar_ente_por_ibge
+        from app.queries.federal import upsert_dado_fiscal
+        from app.services.siconfi import SiconfiService
 
         pool = await _create_pool()
         try:
@@ -2647,7 +2676,7 @@ def backfill_fiscal(context: AssetExecutionContext):
 
             for ano in ANOS_BACKFILL:
 
-                for ibge, uf in ESTADOS_IBGE.items():
+                for ibge, _uf in ESTADOS_IBGE.items():
                     ente = await buscar_ente_por_ibge(pool, ibge)
                     if not ente: continue
                     for periodo in range(1, 7):
@@ -2663,7 +2692,7 @@ def backfill_fiscal(context: AssetExecutionContext):
                                 total += 1
                         except Exception: pass
 
-                for ibge, nome in CAPITAIS_IBGE.items():
+                for ibge, _nome in CAPITAIS_IBGE.items():
                     ente = await buscar_ente_por_ibge(pool, ibge)
                     if not ente: continue
                     for periodo in range(1, 7):
@@ -2692,9 +2721,11 @@ def backfill_fiscal(context: AssetExecutionContext):
 def backfill_votacoes_senado(context: AssetExecutionContext):
     async def run():
         from datetime import datetime
+
         import httpx
-        from app.services.senado import SenadoService
+
         from app.queries.votacoes import upsert_proposicao, upsert_votacao, upsert_voto
+        from app.services.senado import SenadoService
 
         pool = await _create_pool()
         try:

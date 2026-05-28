@@ -6,6 +6,7 @@ import pytest
 
 from app import metrics
 
+
 @pytest.mark.asyncio
 async def test_incr_incrementa_contador(monkeypatch):
     fake = AsyncMock()

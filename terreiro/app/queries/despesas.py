@@ -11,6 +11,7 @@ from app.sanitize import (
     to_int,
 )
 
+
 async def listar_despesas(
     pool: asyncpg.Pool,
     *,

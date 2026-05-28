@@ -2,6 +2,7 @@ import uuid
 
 import asyncpg
 
+
 async def criar_conversa(
     pool: asyncpg.Pool, titulo: str | None = None, user_id: uuid.UUID | None = None
 ) -> uuid.UUID:

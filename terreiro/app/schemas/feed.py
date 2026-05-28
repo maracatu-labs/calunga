@@ -12,6 +12,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+
 class Severidade(str, Enum):
     CRITICO = "critico"
     ATENCAO = "atencao"

@@ -1,6 +1,7 @@
 """Testes dos classificadores de anomalias (Gonguê)."""
 
-from app.classifiers.cnpj_cpf_invalido import _validate_cpf, _validate_cnpj
+from app.classifiers.cnpj_cpf_invalido import _validate_cnpj, _validate_cpf
+
 
 class TestValidateCPF:
     def test_cpf_valido(self):

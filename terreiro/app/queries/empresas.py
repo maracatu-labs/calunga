@@ -1,5 +1,6 @@
 import asyncpg
 
+
 async def buscar_empresa_por_cnpj(pool: asyncpg.Pool, cnpj: str) -> asyncpg.Record | None:
     digits = cnpj.replace(".", "").replace("/", "").replace("-", "").strip()
     return await pool.fetchrow(

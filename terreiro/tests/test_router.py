@@ -4,6 +4,7 @@ import pytest
 
 from app.agent.router import fallback_model, route_model
 
+
 class TestRouteModel:
     @pytest.mark.parametrize("pergunta", [
         "Quanto o deputado Lula gastou em 2024?",

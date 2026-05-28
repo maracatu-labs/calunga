@@ -10,6 +10,7 @@ from app.sanitize import (
     to_int,
 )
 
+
 async def upsert_proposicao(pool: asyncpg.Pool, **data) -> asyncpg.Record:
     return await pool.fetchrow(
         """

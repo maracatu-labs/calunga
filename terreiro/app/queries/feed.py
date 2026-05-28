@@ -6,6 +6,7 @@ import asyncpg
 
 from app.sanitize import normalizar_texto
 
+
 async def publicar_evento(pool: asyncpg.Pool, **data) -> asyncpg.Record | None:
     """Publica evento no feed. Ignora se já existe (mesmo referencia_tipo + referencia_id + tipo)."""
     return await pool.fetchrow(
@@ -99,22 +100,24 @@ async def get_evento_por_id(pool: asyncpg.Pool, evento_id: int) -> dict | None:
     sem chave `versao_contrato`), compõe on-demand os blocos faltantes
     via JOIN com despesas/parlamentares/empresas/sancoes.
     """
-    from app.schemas.feed import Ator, Acao, Evidencia, Objeto, Severidade
+    from app.classifiers.explicacoes import (
+        criterios as criterios_do_classificador,
+    )
+    from app.classifiers.explicacoes import (
+        gerar_titulo_narrativo,
+        motivo_humano,
+    )
+    from app.schemas.feed import Acao, Ator, Evidencia, Objeto
     from app.services.feed_enrichment import (
         calcular_severidade,
         construir_dados_ricos,
         formatar_brl,
         formatar_cnpj,
+        link_busca_cnpj,
         link_camara_deputado,
         link_portal_transparencia_sancao,
-        link_busca_cnpj,
         link_recibo,
         link_senado_senador,
-    )
-    from app.classifiers.explicacoes import (
-        criterios as criterios_do_classificador,
-        gerar_titulo_narrativo,
-        motivo_humano,
     )
 
     row = await pool.fetchrow(

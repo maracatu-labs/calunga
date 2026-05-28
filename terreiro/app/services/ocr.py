@@ -50,6 +50,7 @@ def extract_text_from_pdf(pdf_bytes: bytes) -> str | None:
 async def analyze_receipt_with_llm(text: str) -> dict:
     """Analisa texto de recibo usando Gemini para identificar irregularidades."""
     from langchain_google_genai import ChatGoogleGenerativeAI
+
     from app.config import settings
 
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=settings.google_api_key, max_output_tokens=1024)
