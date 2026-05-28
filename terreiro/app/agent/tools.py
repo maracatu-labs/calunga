@@ -11,6 +11,7 @@ from app.queries import parlamentares as parlamentares_q
 from app.queries import suspeitas as suspeitas_q
 from app.services.brasil_api import consultar_cnpj
 
+
 class BuscarDespesasInput(BaseModel):
     """Busca despesas (gastos) de deputados federais usando dados do CEAP."""
 
@@ -563,8 +564,8 @@ async def buscar_empresa(cnpj: str) -> str:
         ]
         result["alerta"] = f"Empresa possui {len(sancoes)} sanção(ões) ativa(s)."
 
+        from app.schemas.feed import Ator, Contexto, Objeto, Severidade
         from app.services.feed import publicar_descoberta_chat
-        from app.schemas.feed import Acao, Ator, Contexto, Objeto, Severidade
         from app.services.feed_enrichment import (
             construir_dados_ricos,
             formatar_cnpj,

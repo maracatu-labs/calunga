@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+
 class ParlamentarResponse(BaseModel):
     id: int
     id_externo: str

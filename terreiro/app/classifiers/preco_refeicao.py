@@ -97,13 +97,13 @@ class PrecoRefeicaoAnomalo(BaseClassifier):
                     "std": np.std(cluster_medias),
                 }
 
-            for (cnpj, s), label in zip(stats.items(), labels):
+            for (_cnpj, s), label in zip(stats.items(), labels, strict=False):
                 s["cluster"] = int(label)
                 s["cluster_threshold"] = cluster_stats[label]["media"] + 4 * cluster_stats[label]["std"]
 
         except ImportError:
             logger.warning("scikit-learn não instalado. Usando threshold simples.")
-            for cnpj, s in stats.items():
+            for _cnpj, s in stats.items():
                 s["cluster_threshold"] = s["media"] + 4 * s["std"]
 
         suspeitas = []

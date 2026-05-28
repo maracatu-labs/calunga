@@ -3,6 +3,7 @@ import json
 
 import asyncpg
 
+
 async def inserir_raw(
     pool: asyncpg.Pool,
     fonte: str,

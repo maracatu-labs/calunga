@@ -2,6 +2,7 @@ import uuid
 
 import asyncpg
 
+
 async def criar_magic_link(pool: asyncpg.Pool, email: str) -> uuid.UUID:
     row = await pool.fetchrow(
         "INSERT INTO magic_links (email) VALUES ($1) RETURNING id",

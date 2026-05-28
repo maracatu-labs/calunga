@@ -21,6 +21,7 @@ from app.schemas.feed import (
     Severidade,
 )
 
+
 def formatar_brl(valor: float | Decimal | str | None) -> str:
     if valor is None or valor == "":
         return "R$ 0,00"

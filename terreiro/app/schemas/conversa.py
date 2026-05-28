@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.schemas.chat import ChatMessage
 
+
 class ConversaResponse(BaseModel):
     id: UUID
     titulo: str | None = None

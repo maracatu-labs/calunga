@@ -7,7 +7,7 @@ Garantem precisão e veracidade dos dados usados pela LLM e tools.
 
 import re
 from datetime import date
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
 UFS_VALIDAS = {
     "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS",

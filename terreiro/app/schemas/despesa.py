@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel
 
+
 class DespesaResponse(BaseModel):
     id: int
     id_externo: str | None = None

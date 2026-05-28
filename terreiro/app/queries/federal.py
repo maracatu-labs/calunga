@@ -4,13 +4,14 @@ import asyncpg
 
 from app.sanitize import (
     limpar_documento,
+    normalizar_ano,
     normalizar_data,
+    normalizar_mes,
     normalizar_texto,
     normalizar_valor,
-    normalizar_ano,
-    normalizar_mes,
     to_int,
 )
+
 
 async def upsert_cpgf(pool: asyncpg.Pool, **data) -> asyncpg.Record:
     return await pool.fetchrow(

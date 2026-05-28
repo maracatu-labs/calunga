@@ -11,7 +11,6 @@ Status: estrutura base criada. APIs estaduais variam muito em formato e disponib
 Implementação detalhada será feita estado por estado conforme prioridade.
 """
 
-import asyncio
 import logging
 
 import httpx

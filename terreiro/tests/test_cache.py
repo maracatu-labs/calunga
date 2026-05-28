@@ -6,6 +6,7 @@ import pytest
 
 from app import cache as cache_module
 
+
 class TestCacheKey:
     def test_mesma_pergunta_em_conversas_diferentes_tem_keys_distintas(self):
         k1 = cache_module._cache_key("Quem e ele?", "flash", "conv-a")

@@ -1,5 +1,6 @@
 import asyncpg
 
+
 async def listar_entes(
     pool: asyncpg.Pool,
     *,

@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+
 class FakeRecord(dict):
     """Simula asyncpg.Record: acesso por chave, keys(), e iteravel."""
 

@@ -8,6 +8,7 @@ from app.sanitize import (
     normalizar_uf,
 )
 
+
 async def listar_parlamentares(
     pool: asyncpg.Pool,
     *,

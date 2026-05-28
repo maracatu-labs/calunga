@@ -7,6 +7,7 @@ from fastapi import HTTPException
 
 from app.services import token_quota
 
+
 class TestCharsToTokens:
     def test_approximates_chars_divided_by_four(self):
         assert token_quota._chars_to_tokens(4) == 1

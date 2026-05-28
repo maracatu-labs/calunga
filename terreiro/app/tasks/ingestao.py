@@ -28,9 +28,9 @@ async def _get_pool():
 def ingestao_camara_deputados():
     """Busca deputados da legislatura atual e atualiza o banco."""
     async def run():
-        from app.services.camara import CamaraService
         from app.queries.parlamentares import upsert_parlamentar
         from app.queries.raw_ingestao import inserir_raw
+        from app.services.camara import CamaraService
 
         pool = await _get_pool()
         try:
@@ -70,13 +70,12 @@ def ingestao_camara_deputados():
 def ingestao_camara_despesas():
     """Busca despesas do mês corrente de todos os deputados."""
     async def run():
-        from app.services.camara import CamaraService
         from app.queries.despesas import upsert_despesa
         from app.queries.raw_ingestao import inserir_raw
+        from app.services.camara import CamaraService
 
         pool = await _get_pool()
         ano = date.today().year
-        mes = date.today().month
 
         try:
             async with httpx.AsyncClient(
@@ -143,10 +142,10 @@ def ingestao_camara_despesas():
 def ingestao_senado():
     """Busca senadores e despesas do ano corrente."""
     async def run():
-        from app.services.senado import SenadoService
-        from app.queries.parlamentares import upsert_parlamentar
         from app.queries.despesas import upsert_despesa
+        from app.queries.parlamentares import upsert_parlamentar
         from app.queries.raw_ingestao import inserir_raw
+        from app.services.senado import SenadoService
 
         pool = await _get_pool()
         ano = date.today().year

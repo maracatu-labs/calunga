@@ -4,6 +4,7 @@ import json
 
 import asyncpg
 
+
 async def busca_hibrida(
     pool: asyncpg.Pool,
     query_text: str,
