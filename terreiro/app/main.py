@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,6 +9,14 @@ from app.config import settings
 from app.database import close_pool, create_pool
 from app.middleware import RateLimitMiddleware
 from app.routers import auth, chats, deputados, exportacao, feed, health, metrics, senadores, suspeitas
+
+if settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.app_env,
+        traces_sample_rate=settings.sentry_traces_sample_rate,
+        send_default_pii=False,
+    )
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

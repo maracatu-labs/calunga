@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import ChartRenderer from "./chart-renderer";
@@ -52,6 +53,7 @@ export default function ChatMessage({ role, content }: MessageProps) {
           ) : (
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeSanitize]}
               components={{
               pre({ children }) {
                 return <div className="not-prose">{children}</div>;
