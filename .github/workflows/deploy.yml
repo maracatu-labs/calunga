@@ -44,7 +44,9 @@ jobs:
           github.event.workflow_run.head_repository.full_name == 'maracatu-labs/calunga'
         )
       )
-    timeout-minutes: 20
+    # 30min absorbs a cold-cache build (BGE-M3 ~2 GB) right after a Dockerfile
+    # ordering change; warm-cache deploys complete in ~3min.
+    timeout-minutes: 30
     steps:
       - name: pull latest main
         working-directory: /srv/calunga
@@ -75,8 +77,22 @@ jobs:
         working-directory: /srv/calunga
         run: docker compose up -d api web
 
-      - name: wait for containers to settle
-        run: sleep 20
+      - name: wait for healthchecks
+        # Poll the compose healthcheck instead of a flat sleep. Cuts the
+        # common path from 20s to under 5s; bounded at 90s for cold start.
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 18); do
+            api=$(docker inspect -f '{{.State.Health.Status}}' calunga-api-1 2>/dev/null || echo missing)
+            web=$(docker inspect -f '{{.State.Health.Status}}' calunga-web-1 2>/dev/null || echo missing)
+            echo "attempt $attempt: api=$api web=$web"
+            if [ "$api" = "healthy" ] && [ "$web" = "healthy" ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "containers did not reach healthy in 90s"
+          exit 1
 
       - name: smoke test
         id: smoke
