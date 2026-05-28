@@ -5,7 +5,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { getSession } from "@/lib/actions";
 
 export const metadata: Metadata = {
-  title: "Maracatu | Controle social dos gastos públicos, no ritmo do povo",
+  title: "Maracatu - Controle social dos gastos públicos, no ritmo do povo",
   description: "Pergunte em linguagem natural como o dinheiro público está sendo gasto e receba respostas claras, com dados, fontes oficiais e alertas de irregularidades.",
 };
 
