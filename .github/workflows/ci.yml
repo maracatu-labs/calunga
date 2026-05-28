@@ -1,0 +1,78 @@
+name: ci
+
+# Runs on every PR and on every push to any branch. No deploy here, no
+# secrets required, runs entirely on GitHub-hosted runners.
+on:
+  pull_request:
+  push:
+    branches:
+      - main      # required so the deploy workflow can gate on this run
+      - "**"      # also runs on feature branches so authors see status before opening PR
+
+# Cancel superseded runs on the same ref to save runner minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: terreiro
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          enable-cache: true
+          cache-dependency-glob: terreiro/uv.lock
+
+      - name: install python
+        run: uv python install 3.12
+
+      - name: sync deps
+        run: uv sync --extra dev --frozen
+
+      - name: ruff
+        run: uv run ruff check .
+
+      - name: pytest
+        run: uv run pytest -q
+
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: cortejo
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: cortejo/package-lock.json
+
+      - name: install
+        run: npm ci
+
+      - name: typecheck
+        run: npx tsc --noEmit
+
+      - name: build
+        run: npm run build
+        env:
+          # Build-time env. Real secrets live in /srv/calunga/.env on the
+          # deploy host and never reach CI.
+          NEXT_PUBLIC_API_URL: http://localhost:8000
