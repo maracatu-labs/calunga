@@ -1,0 +1,63 @@
+# Edge stack: single public ingress for every container on this host.
+#
+# Cloudflare Tunnel (cloudflared) holds an outbound connection to the
+# Cloudflare edge; Cloudflare terminates TLS and forwards requests over
+# the tunnel to Traefik, which inspects Host/Path on the shared
+# "edge_proxy" Docker network and routes to the matching project
+# container via labels.
+#
+# Bootstrap on the host:
+#   docker network create edge_proxy
+#   cp .env.example .env  # fill CLOUDFLARE_TUNNEL_TOKEN
+#   docker compose up -d
+#
+# The Traefik dashboard is bound to 127.0.0.1:8080 — reach it from
+# your laptop with `ssh -L 8080:127.0.0.1:8080 <host>`.
+
+services:
+
+  traefik:
+    image: traefik:v3.1
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=edge_proxy"
+      - "--entrypoints.web.address=:80"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--accesslog.bufferingsize=100"
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [edge_proxy]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    networks: [edge_proxy]
+    depends_on:
+      - traefik
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+networks:
+  edge_proxy:
+    external: true
