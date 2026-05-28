@@ -17,7 +17,10 @@
 services:
 
   traefik:
-    image: traefik:v3.1
+    # v3.1/v3.2 ship with a Docker SDK that negotiates API 1.24, which Docker
+    # Engine >= 25 rejects ("client version 1.24 is too old"). Pin to a known
+    # working tag. Bump deliberately when validating against current Docker.
+    image: traefik:v3.7
     restart: unless-stopped
     command:
       - "--providers.docker=true"
