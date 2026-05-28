@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 import sentry_sdk
@@ -9,6 +10,13 @@ from app.config import settings
 from app.database import close_pool, create_pool
 from app.middleware import RateLimitMiddleware
 from app.routers import auth, chats, deputados, exportacao, feed, health, metrics, senadores, suspeitas
+
+# uvicorn only configures its own loggers; app-namespaced loggers default to
+# WARNING, which silences operational signal (magic_link_sent, cache.hit,
+# tool.calls, etc). Bring them up to INFO so prod log inspection actually
+# shows what happened.
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+logging.getLogger("app").setLevel(logging.INFO)
 
 if settings.sentry_dsn:
     sentry_sdk.init(
