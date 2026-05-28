@@ -1,0 +1,34 @@
+name: guard-workflow-changes
+
+# Hard fail any pull request from a fork that modifies the .github/
+# directory. Workflow edits from forks are the highest-risk surface for a
+# self-hosted runner: a malicious edit, if approved by mistake, could run
+# arbitrary code on the deploy host.
+#
+# This action exists as a second gate (the first is the "Require approval
+# for all outside collaborators" setting on the repo's Actions page) and
+# makes the policy visible in code review.
+
+on:
+  pull_request:
+    paths:
+      - ".github/**"
+
+permissions:
+  contents: read
+
+jobs:
+  block-fork-workflow-edits:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.fork == true
+    steps:
+      - name: refuse
+        run: |
+          cat <<MSG
+          ::error::This PR modifies .github/ and comes from a fork.
+          Workflow edits from forks are blocked because the deploy stack
+          runs on a self-hosted runner with access to production secrets
+          and the Docker socket. Open an issue describing the change you
+          would like, and a maintainer can implement it directly.
+          MSG
+          exit 1

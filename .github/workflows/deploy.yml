@@ -1,0 +1,106 @@
+name: deploy
+
+# Runs only after the CI workflow succeeds on main. Self-hosted runner on
+# maracatu-lab pulls the new code, rebuilds the affected images and restarts
+# the api/web containers. Smoke test against https://maracatu.org/health;
+# rollback to the previous image tags if the smoke test fails.
+#
+# Security
+# - No secrets used. Real env lives in /srv/calunga/.env on the host.
+# - workflow_run + branches: [main] means only commits already on main can
+#   trigger this. Pull requests (including from forks) cannot.
+# - The job has an explicit `if:` guard that double-checks the trigger
+#   context, so even a future workflow edit that adds new triggers cannot
+#   accidentally invoke a deploy from a fork PR.
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false  # never cancel a deploy mid-flight
+
+jobs:
+  deploy:
+    name: deploy to maracatu-lab
+    runs-on: [self-hosted, maracatu-lab]
+    # Defense-in-depth: only run in the canonical repo, and only when
+    # triggered manually OR by a successful CI run on main of the canonical
+    # repo (not a fork). This guard exists in addition to the on: filters
+    # so that any future edit to the triggers cannot accidentally let a
+    # fork PR reach this job.
+    if: >-
+      github.repository == 'maracatu-labs/calunga' && (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'main' &&
+          github.event.workflow_run.head_repository.full_name == 'maracatu-labs/calunga'
+        )
+      )
+    timeout-minutes: 20
+    steps:
+      - name: pull latest main
+        working-directory: /srv/calunga
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+          echo "deploying commit: $(git rev-parse --short HEAD)"
+
+      - name: snapshot current images for rollback
+        id: snapshot
+        run: |
+          set -euo pipefail
+          api_id=$(docker images calunga-api:latest --format '{{.ID}}')
+          web_id=$(docker images calunga-web:latest --format '{{.ID}}')
+          echo "api_id=$api_id" >> "$GITHUB_OUTPUT"
+          echo "web_id=$web_id" >> "$GITHUB_OUTPUT"
+          # Pin previous images by tag so rollback is a single retag away.
+          [ -n "$api_id" ] && docker tag "$api_id" calunga-api:rollback
+          [ -n "$web_id" ] && docker tag "$web_id" calunga-web:rollback
+          echo "previous api: $api_id"
+          echo "previous web: $web_id"
+
+      - name: build api and web
+        working-directory: /srv/calunga
+        run: docker compose build api web
+
+      - name: restart api and web
+        working-directory: /srv/calunga
+        run: docker compose up -d api web
+
+      - name: wait for containers to settle
+        run: sleep 20
+
+      - name: smoke test
+        id: smoke
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 https://maracatu.org/health || echo 000)
+            echo "attempt $attempt: HTTP $code"
+            if [ "$code" = "200" ]; then
+              echo "smoke test ok"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "smoke test failed after 6 attempts"
+          exit 1
+
+      - name: rollback on failure
+        if: failure() && steps.snapshot.outputs.api_id != '' && steps.snapshot.outputs.web_id != ''
+        working-directory: /srv/calunga
+        run: |
+          echo "::warning::deploy failed, rolling back to previous images"
+          docker tag calunga-api:rollback calunga-api:latest
+          docker tag calunga-web:rollback calunga-web:latest
+          docker compose up -d api web
+          sleep 15
+          curl -sS -o /dev/null -w 'rollback /health -> %{http_code}\n' https://maracatu.org/health || true
