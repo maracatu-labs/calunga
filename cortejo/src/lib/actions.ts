@@ -129,7 +129,7 @@ export async function deleteAllChats() {
 export async function shareChat(chatId: string) {
   const token = await getToken();
   if (!token) return { ok: false };
-  const res = await fetch(`${API_URL}/v1/conversas/${chatId}/compartilhar`, {
+  const res = await fetch(`${API_URL}/v1/conversas/${chatId}/share`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });

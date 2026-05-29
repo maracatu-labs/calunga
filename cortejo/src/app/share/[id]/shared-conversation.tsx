@@ -36,9 +36,9 @@ export default function SharedConversation({ data }: { data: SharedData }) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-[#212121] text-zinc-900 dark:text-zinc-100 p-4">
         <MessageSquare className="w-12 h-12 text-zinc-400 dark:text-zinc-500 mb-4" />
-        <h1 className="text-2xl font-semibold mb-2">Consulta não encontrada</h1>
+        <h1 className="text-2xl font-semibold mb-2">Conversa não encontrada</h1>
         <p className="text-zinc-500 dark:text-zinc-400 mb-6 text-center max-w-md">
-          Este link pode ter expirado ou a consulta não foi compartilhada publicamente.
+          Este link pode ter expirado ou a conversa não foi compartilhada publicamente.
         </p>
         <Link
           href="/login"
@@ -68,7 +68,7 @@ export default function SharedConversation({ data }: { data: SharedData }) {
           href="/login"
           className="text-sm font-medium px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-80 transition-opacity"
         >
-          Fazer minha consulta
+          Iniciar minha conversa
         </Link>
       </header>
 
@@ -77,7 +77,7 @@ export default function SharedConversation({ data }: { data: SharedData }) {
           <div className="mb-10 flex items-start sm:items-center gap-3 p-4 sm:px-5 sm:py-4 bg-[#f4f4f4] dark:bg-[#2f2f2f] rounded-2xl border border-transparent dark:border-zinc-800 text-sm text-zinc-600 dark:text-zinc-300">
             <Sparkles className="w-5 h-5 text-zinc-500 dark:text-zinc-400 shrink-0 mt-0.5 sm:mt-0" />
             <p>
-              Esta é uma consulta pública sobre gastos públicos, gerada pela <span className="font-semibold text-zinc-900 dark:text-zinc-100">Calunga</span>, a guardiã do dinheiro público do Maracatu.
+              Esta é uma conversa pública sobre gastos públicos, gerada pela <span className="font-semibold text-zinc-900 dark:text-zinc-100">Calunga</span>, a guardiã do dinheiro público do Maracatu.
               Os dados vêm de fontes oficiais do governo.
             </p>
           </div>
