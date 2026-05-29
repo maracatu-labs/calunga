@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { MoreHorizontal, Share2, Trash2 } from "lucide-react";
+import { MoreVertical, Share2, Trash2 } from "lucide-react";
 
 type Props = {
   onShare: () => void;
@@ -53,7 +53,7 @@ export default function ConversationMenu({ onShare, onDelete, isActive }: Props)
           " hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/5 dark:hover:bg-white/10"
         }
       >
-        <MoreHorizontal className="w-4 h-4" />
+        <MoreVertical className="w-4 h-4" />
       </button>
 
       <AnimatePresence>
