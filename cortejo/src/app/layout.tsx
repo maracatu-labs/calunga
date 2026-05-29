@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-context";
 import { AuthProvider } from "@/lib/auth-context";
 import { getSession } from "@/lib/actions";
+import ServiceStatusBanner from "@/components/service-status-banner";
 
 export const metadata: Metadata = {
   title: "Maracatu - Controle social dos gastos públicos, no ritmo do povo",
@@ -24,6 +25,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen">
         <ThemeProvider>
           <AuthProvider initialUser={user}>
+            <ServiceStatusBanner />
             {children}
           </AuthProvider>
         </ThemeProvider>
