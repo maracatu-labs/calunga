@@ -24,18 +24,18 @@ export default function Toast({ message, kind = "success" }: Props) {
           role="status"
           aria-live="polite"
           className={
-            "fixed top-3 left-1/2 -translate-x-1/2 z-[100] max-w-md mx-auto px-4 py-2.5 text-sm rounded-full shadow-lg flex items-center gap-2 " +
+            "fixed top-3 left-1/2 -translate-x-1/2 z-[100] max-w-[calc(100vw-1.5rem)] sm:max-w-md px-4 py-2.5 text-sm rounded-2xl shadow-lg flex items-start gap-2 " +
             (kind === "error"
               ? "bg-red-600 text-white"
               : "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900")
           }
         >
           {kind === "error" ? (
-            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           ) : (
-            <Check className="w-4 h-4 shrink-0" />
+            <Check className="w-4 h-4 shrink-0 mt-0.5" />
           )}
-          <span className="truncate">{message}</span>
+          <span className="leading-snug">{message}</span>
         </motion.div>
       )}
     </AnimatePresence>

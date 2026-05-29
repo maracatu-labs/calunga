@@ -75,7 +75,9 @@ export default function ChatShell({
   const handleShareChat = useCallback(async (chatId: string) => {
     const outcome = await shareConversation(chatId);
     if (outcome.kind === "copied") {
-      flashToast("Link copiado. Qualquer pessoa com ele pode ver esta conversa.");
+      flashToast("Link copiado! Quem tiver o link pode ver esta conversa.");
+    } else if (outcome.kind === "shared") {
+      flashToast("Link compartilhado!");
     } else if (outcome.kind === "error") {
       flashToast(outcome.message, "error");
     }

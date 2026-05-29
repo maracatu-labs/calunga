@@ -42,7 +42,7 @@ function ChatIdPageInner() {
     setFollowUps(questions.slice(0, 4));
   }, []);
 
-  const { messages, isLoading, append, setMessages, data, error } = useChat({
+  const { messages, isLoading, append, setMessages, data, setData, error } = useChat({
     api: "/api/chat",
     body: { conversa_id: id },
     onResponse: () => {
@@ -102,6 +102,7 @@ function ChatIdPageInner() {
     if (textareaRef.current) textareaRef.current.style.height = "auto";
     setFollowUps([]);
     resetScroll();
+    setData([]);
 
     append({ role: "user", content: text });
   };
@@ -129,14 +130,9 @@ function ChatIdPageInner() {
             />
           ))}
 
-          {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
-            <ChatMessage role="model" content="" />
-          )}
-
-          {isLoading && toolEvents.length > 0 && (
-            <div className="max-w-3xl w-full">
-              <ToolActivity events={toolEvents} />
-            </div>
+          {((isLoading && messages.length > 0 && messages[messages.length - 1].role === "user") ||
+            toolEvents.length > 0) && (
+            <ToolActivity events={toolEvents} loading={isLoading} />
           )}
 
           {error && (

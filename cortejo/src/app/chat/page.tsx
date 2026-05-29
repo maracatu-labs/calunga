@@ -50,7 +50,7 @@ function ChatPageInner() {
     setFollowUps(questions.slice(0, 4));
   }, []);
 
-  const { messages, isLoading, append, data, error } = useChat({
+  const { messages, isLoading, append, data, setData, error } = useChat({
     api: "/api/chat",
     onResponse: (response) => {
       setFollowUps([]);
@@ -102,6 +102,7 @@ function ChatPageInner() {
     if (textareaRef.current) textareaRef.current.style.height = "auto";
     setFollowUps([]);
     resetScroll();
+    setData([]);
 
     append({ role: "user", content: text });
   };
@@ -118,9 +119,10 @@ function ChatPageInner() {
     const q = searchParams.get("q");
     if (q && q.trim()) {
       autoSubmitted.current = true;
+      setData([]);
       append({ role: "user", content: q });
     }
-  }, [searchParams, append]);
+  }, [searchParams, append, setData]);
 
   return (
     <div className="flex flex-col h-full">
@@ -169,14 +171,9 @@ function ChatPageInner() {
               />
             ))}
 
-            {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
-              <ChatMessage role="model" content="" />
-            )}
-
-            {isLoading && toolEvents.length > 0 && (
-              <div className="max-w-3xl w-full">
-                <ToolActivity events={toolEvents} />
-              </div>
+            {((isLoading && messages.length > 0 && messages[messages.length - 1].role === "user") ||
+              toolEvents.length > 0) && (
+              <ToolActivity events={toolEvents} loading={isLoading} />
             )}
 
             {error && (
