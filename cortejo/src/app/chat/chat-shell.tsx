@@ -4,12 +4,13 @@ import { useState, useCallback, useTransition, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { Menu, X, LogOut, Sun, Moon, Share2, Plus, Trash2 } from "lucide-react";
+import { Menu, X, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { fetchChats as fetchChatsAction, deleteChat as deleteChatAction, deleteAllChats as deleteAllChatsAction } from "@/lib/actions";
 import { cn } from "@/lib/utils";
-import ShareModal from "@/components/chat/share-modal";
+import ShareButton from "@/components/chat/share-button";
+import UserMenu from "@/components/chat/user-menu";
 
 type Chat = { id: string; titulo: string; updated_at: string };
 
@@ -54,7 +55,6 @@ export default function ChatShell({
   const router = useRouter();
   const pathname = usePathname();
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
-  const [chatToShare, setChatToShare] = useState<{ id: string; title?: string } | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [, startTransition] = useTransition();
 
@@ -70,13 +70,6 @@ export default function ChatShell({
     lastPathname.current = pathname;
     refreshChats();
   }
-
-  const handleShareClick = useCallback(() => {
-    const chatId = pathname.split("/").pop();
-    if (!chatId || pathname === "/chat") return;
-    const title = chats.find((c) => c.id === chatId)?.titulo;
-    setChatToShare({ id: chatId, title });
-  }, [pathname, chats]);
 
   const handleDeleteChat = useCallback(async () => {
     if (!chatToDelete) return;
@@ -193,16 +186,6 @@ export default function ChatShell({
         )}
       </AnimatePresence>
 
-      {}
-      <AnimatePresence>
-        {chatToShare && (
-          <ShareModal
-            chatId={chatToShare.id}
-            chatTitle={chatToShare.title}
-            onClose={() => setChatToShare(null)}
-          />
-        )}
-      </AnimatePresence>
 
       {}
       <AnimatePresence>
@@ -294,39 +277,13 @@ export default function ChatShell({
           </div>
 
           <div className="p-3">
-            {chats.length > 0 && (
-              <button
-                onClick={() => setConfirmDeleteAll(true)}
-                className="flex items-center gap-2 w-full px-2 py-2 mb-1 text-sm text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-                Apagar todas as conversas
-              </button>
-            )}
-            <div className="flex items-center justify-between p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group">
-              <div className="flex items-center gap-2 overflow-hidden">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-400 shrink-0" />
-                <div className="text-sm font-medium truncate text-zinc-700 dark:text-zinc-200">
-                  {user?.email}
-                </div>
-              </div>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  toggleTheme();
-                }}
-                className="p-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-            </div>
-            <a
-              href="/logout"
-              className="flex items-center gap-2 w-full px-2 py-2 mt-1 text-sm text-zinc-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              Sair
-            </a>
+            <UserMenu
+              email={user?.email}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+              onDeleteAll={() => setConfirmDeleteAll(true)}
+              chatsCount={chats.length}
+            />
           </div>
         </div>
       </aside>
@@ -351,13 +308,10 @@ export default function ChatShell({
           </div>
 
           {isChatPage && (
-            <button
-              onClick={handleShareClick}
-              className="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-zinc-600 dark:text-zinc-300"
-            >
-              <Share2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Compartilhar</span>
-            </button>
+            <ShareButton
+              chatId={pathname.split("/").pop() || ""}
+              chatTitle={chats.find((c) => c.id === pathname.split("/").pop())?.titulo}
+            />
           )}
         </header>
 
