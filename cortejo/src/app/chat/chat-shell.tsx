@@ -308,10 +308,7 @@ export default function ChatShell({
           </div>
 
           {isChatPage && (
-            <ShareButton
-              chatId={pathname.split("/").pop() || ""}
-              chatTitle={chats.find((c) => c.id === pathname.split("/").pop())?.titulo}
-            />
+            <ShareButton chatId={pathname.split("/").pop() || ""} />
           )}
         </header>
 
