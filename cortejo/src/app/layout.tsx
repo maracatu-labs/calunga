@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-context";
 import { AuthProvider } from "@/lib/auth-context";
@@ -44,6 +44,14 @@ export const metadata: Metadata = {
   alternates: {
     canonical: SITE,
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Resize the layout when the soft keyboard opens (Android Chrome) so the
+  // chat input stays above it instead of being covered.
+  interactiveWidget: "resizes-content",
 };
 
 const JSON_LD = {

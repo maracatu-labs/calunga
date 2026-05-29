@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useChat } from "@ai-sdk/react";
 import { motion } from "motion/react";
@@ -9,6 +9,7 @@ import { fetchChat } from "@/lib/actions";
 import ChatMessage from "@/components/chat/chat-message";
 import ToolActivity, { parseToolEvents } from "@/components/chat/tool-activity";
 import ChatErrorBoundary from "@/components/chat/chat-error-boundary";
+import { useAutoScroll } from "@/lib/use-auto-scroll";
 
 export default function ChatIdPage() {
   return (
@@ -20,26 +21,11 @@ export default function ChatIdPage() {
 
 function ChatIdPageInner() {
   const { id } = useParams<{ id: string }>();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [followUps, setFollowUps] = useState<string[]>([]);
   const [localInput, setLocalInput] = useState("");
   const loaded = useRef(false);
-  const userScrolledUp = useRef(false);
-
-  const scrollToBottom = useCallback(() => {
-    if (!userScrolledUp.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-    }
-  }, []);
-
-  const handleScroll = useCallback(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-    userScrolledUp.current = !atBottom;
-  }, []);
+  const { scrollContainerRef, handleScroll, scrollToBottom, resetScroll } = useAutoScroll();
 
   const extractFollowUps = useCallback((content: string) => {
 
@@ -61,7 +47,7 @@ function ChatIdPageInner() {
     body: { conversa_id: id },
     onResponse: () => {
       setFollowUps([]);
-      userScrolledUp.current = false;
+      resetScroll();
       scrollToBottom();
     },
     onFinish: (message) => {
@@ -71,6 +57,10 @@ function ChatIdPageInner() {
   });
 
   const toolEvents = parseToolEvents(data);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, toolEvents.length, scrollToBottom]);
 
   if (id && !loaded.current) {
     loaded.current = true;
@@ -111,7 +101,7 @@ function ChatIdPageInner() {
     setLocalInput("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
     setFollowUps([]);
-    userScrolledUp.current = false;
+    resetScroll();
 
     append({ role: "user", content: text });
   };
@@ -173,7 +163,7 @@ function ChatIdPageInner() {
             </motion.div>
           )}
 
-          <div ref={messagesEndRef} className="h-4" />
+          <div className="h-4" />
         </div>
       </div>
 

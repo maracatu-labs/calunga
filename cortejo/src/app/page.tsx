@@ -31,7 +31,6 @@ const CLASSIFICADORES = [
   { nome: "Preço de Refeição Anômalo", descricao: "Usa agrupamento estatístico (K-Means) para identificar refeições com valor muito acima do padrão do restaurante." },
   { nome: "Despesa Eleitoral", descricao: "Identifica pagamentos a entidades registradas como campanha eleitoral no TSE." },
   { nome: "Despesa em Fim de Semana", descricao: "Sinaliza despesas de alimentação e combustível realizadas em fins de semana e feriados nacionais." },
-  { nome: "Análise de Recibos (OCR)", descricao: "Analisa PDFs de recibos com OCR e IA para identificar inconsistências, como itens não permitidos." },
 ];
 
 export default async function HomePage() {
@@ -74,7 +73,7 @@ export default async function HomePage() {
             className="inline-flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black py-3.5 px-6 rounded-full font-medium hover:opacity-80 transition-opacity"
           >
             <MessageSquare className="w-4 h-4" />
-            Fazer uma consulta
+            Iniciar uma conversa
           </Link>
         </section>
 
@@ -127,7 +126,7 @@ export default async function HomePage() {
             <div className="p-5 bg-[#f4f4f4] dark:bg-[#2f2f2f] rounded-2xl">
               <h3 className="font-medium mb-2">2. A Calunga busca nos dados oficiais</h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Nossa IA usa 13 ferramentas especializadas para consultar dados reais de 6 fontes governamentais. Ela nunca inventa números e sempre vai à fonte.
+                Nossa IA usa 16 ferramentas especializadas para consultar dados reais de 6 fontes governamentais. Ela nunca inventa números e sempre vai à fonte.
               </p>
             </div>
             <div className="p-5 bg-[#f4f4f4] dark:bg-[#2f2f2f] rounded-2xl">
@@ -213,9 +212,9 @@ export default async function HomePage() {
               </thead>
               <tbody>
                 {[
-                  ["Calunga", "Agente IA com 13 ferramentas de consulta", "LangGraph + Claude"],
+                  ["Calunga", "Agente IA com 16 ferramentas de consulta", "LangGraph + Gemini"],
                   ["Baque", "Pipeline de ingestão contínua de 10+ fontes", "Dagster"],
-                  ["Gonguê", "7 classificadores de detecção de anomalias", "Regras + K-Means + OCR"],
+                  ["Gonguê", "6 classificadores de detecção de anomalias", "Regras + K-Means"],
                   ["Terreiro", "API REST com busca semântica", "FastAPI + PostgreSQL + pgvector"],
                   ["Cortejo", "Interface web conversacional", "Next.js + Tailwind"],
                 ].map(([nome, funcao, tech], i, arr) => (
@@ -269,7 +268,7 @@ export default async function HomePage() {
             Como detectamos irregularidades
           </h2>
           <p className="text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed">
-            O Gonguê usa 7 classificadores automáticos, baseados em regras matemáticas e estatísticas (não opinião), para sinalizar despesas que merecem atenção. Toda suspeita pode ser verificada nos dados originais.
+            O Gonguê usa 6 classificadores automáticos, baseados em regras matemáticas e estatísticas (não opinião), para sinalizar despesas que merecem atenção. Toda suspeita pode ser verificada nos dados originais.
           </p>
           <div className="space-y-3">
             {CLASSIFICADORES.map((c) => (
@@ -279,6 +278,9 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mt-4">
+            Além dos classificadores automáticos, a Calunga também analisa recibos em PDF sob demanda, com OCR e IA, para identificar inconsistências como itens não permitidos.
+          </p>
         </section>
 
         {}
@@ -314,7 +316,7 @@ export default async function HomePage() {
             className="inline-flex items-center justify-center gap-2 text-sm font-medium px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-80 transition-opacity"
           >
             <MessageSquare className="w-4 h-4" />
-            Fazer uma consulta
+            Iniciar uma conversa
           </Link>
         </section>
 
