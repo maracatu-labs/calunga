@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useCallback, useTransition, useRef } from "react";
+import { useState, useCallback, useTransition, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { Menu, X, Plus, Trash2 } from "lucide-react";
+import { Menu, X, Plus } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { fetchChats as fetchChatsAction, deleteChat as deleteChatAction, deleteAllChats as deleteAllChatsAction } from "@/lib/actions";
 import { cn } from "@/lib/utils";
-import ShareButton from "@/components/chat/share-button";
+import ConversationMenu from "@/components/chat/conversation-menu";
 import UserMenu from "@/components/chat/user-menu";
+import Toast from "@/components/toast";
+import { shareConversation } from "@/lib/share-chat-client";
 
 type Chat = { id: string; titulo: string; updated_at: string };
 
@@ -56,7 +58,28 @@ export default function ChatShell({
   const pathname = usePathname();
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [toast, setToast] = useState<{ message: string; kind: "success" | "error" } | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, startTransition] = useTransition();
+
+  useEffect(() => () => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+  }, []);
+
+  const flashToast = useCallback((message: string, kind: "success" | "error" = "success") => {
+    setToast({ message, kind });
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 4000);
+  }, []);
+
+  const handleShareChat = useCallback(async (chatId: string) => {
+    const outcome = await shareConversation(chatId);
+    if (outcome.kind === "copied") {
+      flashToast("Link copiado. Qualquer pessoa com ele pode ver esta consulta.");
+    } else if (outcome.kind === "error") {
+      flashToast(outcome.message, "error");
+    }
+  }, [flashToast]);
 
   const refreshChats = useCallback(() => {
     startTransition(async () => {
@@ -98,10 +121,9 @@ export default function ChatShell({
     });
   }, [pathname, router]);
 
-  const isChatPage = pathname.startsWith("/chat/") && pathname !== "/chat";
-
   return (
     <div className="flex h-[100dvh] bg-white dark:bg-[#212121] overflow-hidden">
+      <Toast message={toast?.message ?? null} kind={toast?.kind} />
       {}
       <AnimatePresence>
         {chatToDelete && (
@@ -241,36 +263,33 @@ export default function ChatShell({
                   <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 px-2 py-2">
                     {group.label}
                   </div>
-                  {group.chats.map((chat) => (
-                    <div
-                      key={chat.id}
-                      className={cn(
-                        "group relative flex items-center justify-between px-2 py-2 rounded-lg text-sm transition-colors",
-                        pathname === `/chat/${chat.id}`
-                          ? "bg-black/5 dark:bg-white/10 text-zinc-900 dark:text-zinc-100 font-medium"
-                          : "text-zinc-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5"
-                      )}
-                    >
-                      <Link
-                        href={`/chat/${chat.id}`}
-                        onClick={() => setIsMobileOpen(false)}
-                        className="truncate flex-1 pr-6"
+                  {group.chats.map((chat) => {
+                    const isActive = pathname === `/chat/${chat.id}`;
+                    return (
+                      <div
+                        key={chat.id}
+                        className={cn(
+                          "group relative flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm transition-colors",
+                          isActive
+                            ? "bg-black/5 dark:bg-white/10 text-zinc-900 dark:text-zinc-100 font-medium"
+                            : "text-zinc-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5"
+                        )}
                       >
-                        {chat.titulo}
-                      </Link>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setChatToDelete(chat.id);
-                        }}
-                        className="absolute right-2 opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-red-500 transition-all"
-                        title="Apagar consulta"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+                        <Link
+                          href={`/chat/${chat.id}`}
+                          onClick={() => setIsMobileOpen(false)}
+                          className="truncate flex-1 min-w-0 py-1"
+                        >
+                          {chat.titulo}
+                        </Link>
+                        <ConversationMenu
+                          isActive={isActive}
+                          onShare={() => handleShareChat(chat.id)}
+                          onDelete={() => setChatToDelete(chat.id)}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               ))
             )}
@@ -306,10 +325,6 @@ export default function ChatShell({
             </button>
             <span className="font-semibold text-lg text-zinc-800 dark:text-zinc-200">Maracatu</span>
           </div>
-
-          {isChatPage && (
-            <ShareButton chatId={pathname.split("/").pop() || ""} />
-          )}
         </header>
 
         <div className="flex-1 overflow-hidden relative pt-14">
