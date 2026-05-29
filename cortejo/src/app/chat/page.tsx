@@ -6,7 +6,7 @@ import { useChat } from "@ai-sdk/react";
 import { motion } from "motion/react";
 import { ArrowUp, Sparkles } from "lucide-react";
 import ChatMessage from "@/components/chat/chat-message";
-import ToolActivity, { parseToolEvents } from "@/components/chat/tool-activity";
+import ToolActivity, { parseToolEvents, StreamingIndicator } from "@/components/chat/tool-activity";
 import ChatErrorBoundary from "@/components/chat/chat-error-boundary";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
 
@@ -163,17 +163,28 @@ function ChatPageInner() {
           className="flex-1 overflow-y-auto scroll-smooth"
         >
           <div className="max-w-3xl w-full mx-auto px-4 md:px-6 pt-6 pb-6">
-            {messages.map((msg) => (
-              <ChatMessage
-                key={msg.id}
-                role={msg.role === "assistant" ? "model" : "user"}
-                content={msg.role === "assistant" ? stripSuggestions(msg.content) : msg.content}
-              />
-            ))}
+            {messages.map((msg, i) => {
+              const isModel = msg.role === "assistant";
+              const isLast = i === messages.length - 1;
+              return (
+                <div key={msg.id}>
+                  {isModel && isLast && toolEvents.length > 0 && (
+                    <ToolActivity events={toolEvents} loading={isLoading} />
+                  )}
+                  <ChatMessage
+                    role={isModel ? "model" : "user"}
+                    content={isModel ? stripSuggestions(msg.content) : msg.content}
+                  />
+                </div>
+              );
+            })}
 
-            {((isLoading && messages.length > 0 && messages[messages.length - 1].role === "user") ||
-              toolEvents.length > 0) && (
-              <ToolActivity events={toolEvents} loading={isLoading} />
+            {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
+              <ToolActivity events={toolEvents} loading />
+            )}
+
+            {isLoading && messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
+              <StreamingIndicator />
             )}
 
             {error && (
