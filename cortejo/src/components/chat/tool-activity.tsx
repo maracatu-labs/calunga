@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Check, AlertTriangle, Loader2, Sparkles, ChevronRight } from "lucide-react";
+import { Check, AlertTriangle, Loader2, Sparkles, ChevronRight, Terminal } from "lucide-react";
 
 type ToolEvent =
   | {
@@ -48,11 +48,11 @@ const TOOL_LABELS: Record<string, string> = {
 function summarizeArgs(args: Record<string, unknown>): string {
   const entries = Object.entries(args).filter(([, v]) => v != null && v !== "");
   if (entries.length === 0) return "";
-  const parts = entries.slice(0, 3).map(([k, v]) => {
+  const parts = entries.slice(0, 3).map(([, v]) => {
     const valueStr = typeof v === "string" ? v : JSON.stringify(v);
-    return `${k}: ${valueStr.length > 30 ? valueStr.slice(0, 30) + "…" : valueStr}`;
+    return valueStr.length > 28 ? valueStr.slice(0, 28) + "…" : valueStr;
   });
-  return parts.join(", ");
+  return parts.join(" · ");
 }
 
 /**
@@ -84,23 +84,12 @@ export function parseToolEvents(data: unknown): ToolEvent[] {
   return out;
 }
 
-/**
- * Agrupa eventos (tool_start + tool_end) em chamadas discretas. Cada
- * tool_start abre uma chamada "running"; o primeiro tool_end com o mesmo
- * nome de tool a fecha como ok ou error.
- */
 function buildCalls(events: ToolEvent[]): ToolCall[] {
   const result: ToolCall[] = [];
   const openByTool = new Map<string, ToolCall>();
-
   for (const ev of events) {
     if (ev.type === "tool_start") {
-      const call: ToolCall = {
-        id: result.length,
-        tool: ev.tool,
-        args: ev.args || {},
-        status: "running",
-      };
+      const call: ToolCall = { id: result.length, tool: ev.tool, args: ev.args || {}, status: "running" };
       result.push(call);
       openByTool.set(ev.tool, call);
     } else if (ev.type === "tool_end") {
@@ -115,52 +104,23 @@ function buildCalls(events: ToolEvent[]): ToolCall[] {
   return result;
 }
 
-function StatusIcon({ status }: { status: ToolCall["status"] }) {
-  if (status === "running") {
-    return <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 dark:text-zinc-500" />;
-  }
-  if (status === "error") {
-    return <AlertTriangle className="w-3.5 h-3.5 text-red-500" />;
-  }
-  return <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500" />;
-}
-
-function ToolRow({ call }: { call: ToolCall }) {
-  const label = TOOL_LABELS[call.tool] || call.tool;
-  const argsSummary = summarizeArgs(call.args);
-  return (
-    <div className="flex items-start gap-2 text-xs">
-      <span className="flex items-center justify-center w-4 h-4 shrink-0 mt-0.5">
-        <StatusIcon status={call.status} />
-      </span>
-      <span className="min-w-0">
-        <span
-          className={
-            call.status === "running"
-              ? "font-medium text-zinc-600 dark:text-zinc-300"
-              : "font-medium text-zinc-500 dark:text-zinc-400"
-          }
-        >
-          {label}
-        </span>
-        {argsSummary && (
-          <span className="text-zinc-400 dark:text-zinc-500"> · {argsSummary}</span>
-        )}
-        {call.status === "error" && call.error && (
-          <span className="block text-red-500 mt-0.5">{call.error.slice(0, 120)}</span>
-        )}
-      </span>
-    </div>
-  );
+function StepIcon({ status }: { status: ToolCall["status"] }) {
+  if (status === "running") return <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 dark:text-zinc-500" />;
+  if (status === "error") return <AlertTriangle className="w-3.5 h-3.5 text-red-500" />;
+  return <Terminal className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />;
 }
 
 /**
- * Feedback unificado de "raciocínio" da Calunga.
+ * Timeline de raciocínio da Calunga (estilo dropdown), inspirada no padrão
+ * de "tools/etapas" do claude.ai mas com a identidade do Maracatu.
  *
- * - Enquanto `loading`: card com cabeçalho animado ("Analisando dados…") e o
- *   checklist das ferramentas (spinner vira check/erro).
- * - Quando termina (`!loading`) e houve ferramentas: colapsa num resumo
- *   discreto e expansível ("Consultei N fontes oficiais").
+ * - Enquanto `loading`: cabeçalho animado "Analisando dados…" + a timeline
+ *   das ferramentas (trilho vertical, cada passo com ícone + chip de args).
+ * - Quando termina: colapsa num resumo "Consultei N fontes oficiais",
+ *   expansível por clique para rever a timeline.
+ *
+ * Renderiza acima da resposta da LLM. O indicador de "escrevendo" fica
+ * separado, abaixo do texto (ver StreamingIndicator).
  */
 export default function ToolActivity({
   events,
@@ -174,74 +134,101 @@ export default function ToolActivity({
 
   if (!loading && calls.length === 0) return null;
 
-  if (!loading) {
-    const n = calls.length;
-    return (
-      <div className="my-3">
-        <button
-          onClick={() => setExpanded((v) => !v)}
-          aria-expanded={expanded}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-        >
-          <ChevronRight
-            className={"w-3.5 h-3.5 transition-transform " + (expanded ? "rotate-90" : "")}
-          />
-          Consultei {n} {n === 1 ? "fonte oficial" : "fontes oficiais"}
-        </button>
-        <AnimatePresence initial={false}>
-          {expanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.18 }}
-              className="overflow-hidden"
-            >
-              <div className="flex flex-col gap-1.5 pt-2 pl-5">
-                {calls.map((call) => (
-                  <ToolRow key={call.id} call={call} />
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  }
+  const open = loading || expanded;
+  const n = calls.length;
+  const headerLabel = loading
+    ? "Analisando dados…"
+    : `Consultei ${n} ${n === 1 ? "fonte oficial" : "fontes oficiais"}`;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="my-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-[#2f2f2f]/40 p-3"
-    >
-      <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+    <div className="mb-4">
+      <button
+        type="button"
+        onClick={() => !loading && setExpanded((v) => !v)}
+        aria-expanded={open}
+        disabled={loading}
+        className="group flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 disabled:cursor-default"
+      >
         <motion.span
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
+          animate={loading ? { opacity: [0.45, 1, 0.45] } : { opacity: 1 }}
+          transition={loading ? { repeat: Infinity, duration: 1.4, ease: "easeInOut" } : { duration: 0.2 }}
           className="flex"
         >
           <Sparkles className="w-4 h-4 text-emerald-500" />
         </motion.span>
-        <span className="font-medium">Analisando dados…</span>
-      </div>
-      {calls.length > 0 && (
-        <div className="flex flex-col gap-1.5 mt-2.5 pl-0.5">
-          <AnimatePresence initial={false}>
-            {calls.map((call) => (
-              <motion.div
-                key={call.id}
-                initial={{ opacity: 0, x: -4 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0 }}
-              >
-                <ToolRow call={call} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
-    </motion.div>
+        <span className="font-medium">{headerLabel}</span>
+        {!loading && (
+          <ChevronRight
+            className={"w-3.5 h-3.5 transition-transform group-hover:text-zinc-700 dark:group-hover:text-zinc-200 " + (open ? "rotate-90" : "")}
+          />
+        )}
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && n > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
+          >
+            <div className="relative mt-2 ml-[7px] pl-5">
+              <div className="absolute left-0 top-1 bottom-2 w-px bg-zinc-200 dark:bg-zinc-800" />
+              {calls.map((call) => {
+                const label = TOOL_LABELS[call.tool] || call.tool;
+                const chip = summarizeArgs(call.args);
+                return (
+                  <div key={call.id} className="relative flex items-start gap-2.5 pb-3 last:pb-0">
+                    <span className="absolute -left-[26px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-white dark:bg-[#212121]">
+                      <StepIcon status={call.status} />
+                    </span>
+                    <div className="min-w-0 text-xs">
+                      <span className="text-zinc-600 dark:text-zinc-300">{label}</span>
+                      {chip && (
+                        <span className="ml-2 inline-block px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800/70 text-zinc-500 dark:text-zinc-400 align-middle max-w-[260px] truncate">
+                          {chip}
+                        </span>
+                      )}
+                      {call.status === "error" && call.error && (
+                        <span className="block text-red-500 mt-1">{call.error.slice(0, 120)}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {!loading && (
+                <div className="relative flex items-center gap-2.5">
+                  <span className="absolute -left-[26px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-white dark:bg-[#212121]">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500" />
+                  </span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Concluído</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/**
+ * Indicador de "escrevendo" que fica abaixo do texto já streamado,
+ * enquanto a resposta ainda está sendo gerada.
+ */
+export function StreamingIndicator() {
+  return (
+    <div className="flex items-center gap-2 mt-1 mb-4 text-sm text-zinc-400 dark:text-zinc-500">
+      <motion.span
+        animate={{ opacity: [0.45, 1, 0.45] }}
+        transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
+        className="flex"
+      >
+        <Sparkles className="w-4 h-4 text-emerald-500" />
+      </motion.span>
+      <span className="italic">Escrevendo resposta…</span>
+    </div>
   );
 }
 
