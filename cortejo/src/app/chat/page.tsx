@@ -8,6 +8,7 @@ import { ArrowUp, Sparkles } from "lucide-react";
 import ChatMessage from "@/components/chat/chat-message";
 import ToolActivity, { parseToolEvents } from "@/components/chat/tool-activity";
 import ChatErrorBoundary from "@/components/chat/chat-error-boundary";
+import { useAutoScroll } from "@/lib/use-auto-scroll";
 
 const SUGGESTIONS = [
   "Quanto o deputado Albuquerque gastou em 2024?",
@@ -27,28 +28,12 @@ export default function ChatPage() {
 function ChatPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [followUps, setFollowUps] = useState<string[]>([]);
   const [localInput, setLocalInput] = useState("");
   const conversaIdRef = useRef<string | null>(null);
-  const userScrolledUp = useRef(false);
   const autoSubmitted = useRef(false);
-
-  const scrollToBottom = useCallback(() => {
-    if (!userScrolledUp.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-    }
-  }, []);
-
-  const handleScroll = useCallback(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-    userScrolledUp.current = !atBottom;
-  }, []);
+  const { scrollContainerRef, handleScroll, scrollToBottom, resetScroll } = useAutoScroll();
 
   const extractFollowUps = useCallback((content: string) => {
 
@@ -69,7 +54,7 @@ function ChatPageInner() {
     api: "/api/chat",
     onResponse: (response) => {
       setFollowUps([]);
-      userScrolledUp.current = false;
+      resetScroll();
       scrollToBottom();
       const id = response.headers.get("X-Conversa-Id");
       if (id) {
@@ -88,6 +73,10 @@ function ChatPageInner() {
   });
 
   const toolEvents = parseToolEvents(data);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, toolEvents.length, scrollToBottom]);
 
   const stripSuggestions = (content: string) => {
 
@@ -112,7 +101,7 @@ function ChatPageInner() {
     setLocalInput("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
     setFollowUps([]);
-    userScrolledUp.current = false;
+    resetScroll();
 
     append({ role: "user", content: text });
   };
@@ -214,7 +203,7 @@ function ChatPageInner() {
               </motion.div>
             )}
 
-            <div ref={messagesEndRef} className="h-4" />
+            <div className="h-4" />
           </div>
         </div>
       )}
