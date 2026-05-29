@@ -4,11 +4,12 @@ import { useState, useCallback, useTransition, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { Menu, X, LogOut, Sun, Moon, Share2, Check, Plus, Trash2 } from "lucide-react";
+import { Menu, X, LogOut, Sun, Moon, Share2, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
-import { fetchChats as fetchChatsAction, deleteChat as deleteChatAction, deleteAllChats as deleteAllChatsAction, shareChat as shareChatAction } from "@/lib/actions";
+import { fetchChats as fetchChatsAction, deleteChat as deleteChatAction, deleteAllChats as deleteAllChatsAction } from "@/lib/actions";
 import { cn } from "@/lib/utils";
+import ShareModal from "@/components/chat/share-modal";
 
 type Chat = { id: string; titulo: string; updated_at: string };
 
@@ -52,9 +53,8 @@ export default function ChatShell({
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
-  const [copied, setCopied] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
-  const [chatToShare, setChatToShare] = useState<string | null>(null);
+  const [chatToShare, setChatToShare] = useState<{ id: string; title?: string } | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [, startTransition] = useTransition();
 
@@ -74,20 +74,9 @@ export default function ChatShell({
   const handleShareClick = useCallback(() => {
     const chatId = pathname.split("/").pop();
     if (!chatId || pathname === "/chat") return;
-    setChatToShare(chatId);
-  }, [pathname]);
-
-  const handleShareConfirm = useCallback(async () => {
-    if (!chatToShare) return;
-    startTransition(async () => {
-      await shareChatAction(chatToShare);
-      const url = `${window.location.origin}/compartilhar/${chatToShare}`;
-      await navigator.clipboard.writeText(url);
-      setChatToShare(null);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [chatToShare]);
+    const title = chats.find((c) => c.id === chatId)?.titulo;
+    setChatToShare({ id: chatId, title });
+  }, [pathname, chats]);
 
   const handleDeleteChat = useCallback(async () => {
     if (!chatToDelete) return;
@@ -207,42 +196,11 @@ export default function ChatShell({
       {}
       <AnimatePresence>
         {chatToShare && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setChatToShare(null)}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-sm bg-white dark:bg-[#2f2f2f] rounded-2xl p-6 shadow-xl border border-zinc-200 dark:border-zinc-800"
-            >
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-                Compartilhar consulta?
-              </h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-                Um link público será gerado. Qualquer pessoa com o link poderá ver esta consulta e as respostas.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setChatToShare(null)}
-                  className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleShareConfirm}
-                  className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors"
-                >
-                  Compartilhar
-                </button>
-              </div>
-            </motion.div>
-          </div>
+          <ShareModal
+            chatId={chatToShare.id}
+            chatTitle={chatToShare.title}
+            onClose={() => setChatToShare(null)}
+          />
         )}
       </AnimatePresence>
 
@@ -397,8 +355,8 @@ export default function ChatShell({
               onClick={handleShareClick}
               className="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-zinc-600 dark:text-zinc-300"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
-              <span className="hidden sm:inline">{copied ? "Link copiado!" : "Compartilhar"}</span>
+              <Share2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Compartilhar</span>
             </button>
           )}
         </header>

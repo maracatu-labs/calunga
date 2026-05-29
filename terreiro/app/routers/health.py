@@ -4,8 +4,11 @@ from app.database import get_pool
 
 router = APIRouter(tags=["health"])
 
-@router.get("/health")
+@router.api_route("/health", methods=["GET", "HEAD"])
 async def health():
+    """Liveness + database probe. Accepts HEAD for monitors that probe with HEAD
+    (e.g. UptimeRobot default) and GET for monitors that want the JSON body.
+    """
     pool = get_pool()
     db_ok = False
     try:
