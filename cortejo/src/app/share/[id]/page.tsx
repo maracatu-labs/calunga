@@ -64,7 +64,7 @@ export default async function SharedPage({ params }: Props) {
   if (!data) notFound();
 
   const description = buildDescription(data.messages);
-  const url = `${SITE}/compartilhar/${id}`;
+  const url = `${SITE}/share/${id}`;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",

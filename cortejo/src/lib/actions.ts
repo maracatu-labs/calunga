@@ -242,7 +242,7 @@ export async function fetchFeedEvento(id: number): Promise<FeedEvento | null> {
 }
 
 export async function fetchSharedChat(chatId: string) {
-  const res = await fetch(`${API_URL}/v1/compartilhar/${chatId}`, {
+  const res = await fetch(`${API_URL}/v1/share/${chatId}`, {
     cache: "no-store",
   });
   if (!res.ok) return null;
