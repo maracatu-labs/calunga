@@ -7,7 +7,6 @@ import { shareChat } from "@/lib/actions";
 
 type Props = {
   chatId: string;
-  chatTitle?: string;
 };
 
 type Status = "idle" | "sharing" | "done" | "error";
@@ -20,7 +19,7 @@ type Status = "idle" | "sharing" | "done" | "error";
  * Either way the button morphs to a success state for ~3s and a toast surfaces
  * the public-link warning. No modal, no "are you sure" detour.
  */
-export default function ShareButton({ chatId, chatTitle }: Props) {
+export default function ShareButton({ chatId }: Props) {
   const [status, setStatus] = useState<Status>("idle");
   const [toast, setToast] = useState<string | null>(null);
   const resetTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -32,7 +31,6 @@ export default function ShareButton({ chatId, chatTitle }: Props) {
   }, []);
 
   const url = typeof window !== "undefined" ? `${window.location.origin}/compartilhar/${chatId}` : "";
-  const shareText = chatTitle ? `${chatTitle} • Maracatu` : "Compartilhando uma consulta do Maracatu";
 
   const flashToast = (msg: string) => {
     setToast(msg);
@@ -60,7 +58,11 @@ export default function ShareButton({ chatId, chatTitle }: Props) {
 
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
-        await navigator.share({ url, title: shareText, text: shareText });
+        // Pass only `url`: when the user picks "Copy" from the native share
+        // sheet (macOS, iOS), the system concatenates every field we provide
+        // into the clipboard. URL-only keeps the clipboard clean while still
+        // letting WhatsApp/etc fetch a rich preview from our OG metadata.
+        await navigator.share({ url });
         flashDone();
         return;
       } catch {
@@ -77,7 +79,7 @@ export default function ShareButton({ chatId, chatTitle }: Props) {
       flashToast("Não foi possível copiar o link. Selecione manualmente.");
       resetTimeout.current = setTimeout(() => setStatus("idle"), 3000);
     }
-  }, [chatId, shareText, url, status]);
+  }, [chatId, url, status]);
 
   const label = {
     idle: "Compartilhar",
