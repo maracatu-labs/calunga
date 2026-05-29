@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, LogOut, Sun, Moon, Share2, Check, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
-import { fetchChats as fetchChatsAction, deleteChat as deleteChatAction, shareChat as shareChatAction } from "@/lib/actions";
+import { fetchChats as fetchChatsAction, deleteChat as deleteChatAction, deleteAllChats as deleteAllChatsAction, shareChat as shareChatAction } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 
 type Chat = { id: string; titulo: string; updated_at: string };
@@ -55,6 +55,7 @@ export default function ChatShell({
   const [copied, setCopied] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
   const [chatToShare, setChatToShare] = useState<string | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [, startTransition] = useTransition();
 
   const refreshChats = useCallback(() => {
@@ -102,6 +103,19 @@ export default function ChatShell({
     });
   }, [chatToDelete, pathname, router]);
 
+  const handleDeleteAllConfirm = useCallback(async () => {
+    startTransition(async () => {
+      const result = await deleteAllChatsAction();
+      if (result.ok) {
+        setChats([]);
+        if (pathname.startsWith("/chat/") && pathname !== "/chat") {
+          router.push("/chat");
+        }
+      }
+      setConfirmDeleteAll(false);
+    });
+  }, [pathname, router]);
+
   const isChatPage = pathname.startsWith("/chat/") && pathname !== "/chat";
 
   return (
@@ -141,6 +155,48 @@ export default function ChatShell({
                   className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-full transition-colors"
                 >
                   Apagar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {}
+      <AnimatePresence>
+        {confirmDeleteAll && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setConfirmDeleteAll(false)}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-sm bg-white dark:bg-[#2f2f2f] rounded-2xl p-6 shadow-xl border border-zinc-200 dark:border-zinc-800"
+            >
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                Apagar todas as conversas?
+              </h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+                Você está prestes a apagar {chats.length} {chats.length === 1 ? "conversa" : "conversas"}. Esta ação não pode ser desfeita.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setConfirmDeleteAll(false)}
+                  className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteAllConfirm}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-full transition-colors"
+                >
+                  Apagar todas
                 </button>
               </div>
             </motion.div>
@@ -280,6 +336,15 @@ export default function ChatShell({
           </div>
 
           <div className="p-3">
+            {chats.length > 0 && (
+              <button
+                onClick={() => setConfirmDeleteAll(true)}
+                className="flex items-center gap-2 w-full px-2 py-2 mb-1 text-sm text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                Apagar todas as conversas
+              </button>
+            )}
             <div className="flex items-center justify-between p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group">
               <div className="flex items-center gap-2 overflow-hidden">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-400 shrink-0" />

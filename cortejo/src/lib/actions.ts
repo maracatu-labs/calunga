@@ -114,6 +114,18 @@ export async function deleteChat(chatId: string) {
   return { ok: res.ok };
 }
 
+export async function deleteAllChats() {
+  const token = await getToken();
+  if (!token) return { ok: false as const, deleted: 0 };
+  const res = await fetch(`${API_URL}/v1/conversas`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return { ok: false as const, deleted: 0 };
+  const data = await res.json() as { ok: boolean; deleted: number };
+  return { ok: true as const, deleted: data.deleted ?? 0 };
+}
+
 export async function shareChat(chatId: string) {
   const token = await getToken();
   if (!token) return { ok: false };

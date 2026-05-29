@@ -148,3 +148,17 @@ async def deletar_conversa(
             conversa_id,
         )
     return result == "DELETE 1"
+
+async def deletar_todas_conversas(pool: asyncpg.Pool, user_id: uuid.UUID) -> int:
+    """Delete every conversation for the given user. Returns count deleted.
+
+    Messages cascade automatically via the mensagens.conversa_id foreign key
+    (ON DELETE CASCADE in migration 0001).
+    """
+    result = await pool.execute(
+        "DELETE FROM conversas WHERE user_id = $1",
+        user_id,
+    )
+    # asyncpg returns the command tag, e.g. "DELETE 7"
+    parts = result.split()
+    return int(parts[1]) if len(parts) == 2 and parts[0] == "DELETE" else 0

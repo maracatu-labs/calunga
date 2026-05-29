@@ -206,3 +206,11 @@ async def deletar_conversa(conversa_id: uuid.UUID, current_user: dict = Depends(
     if not deleted:
         raise HTTPException(status_code=404, detail="Conversa não encontrada")
     return {"ok": True}
+
+@router.delete("/conversas")
+async def deletar_todas_conversas(current_user: dict = Depends(get_current_user)):
+    """Delete every conversation belonging to the authenticated user. Idempotent."""
+    pool = get_pool()
+    user_id = uuid.UUID(current_user["id"])
+    count = await conversas_q.deletar_todas_conversas(pool, user_id=user_id)
+    return {"ok": True, "deleted": count}
