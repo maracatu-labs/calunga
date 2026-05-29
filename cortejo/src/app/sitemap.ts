@@ -4,7 +4,7 @@ import { fetchFeed } from "@/lib/actions";
 const SITE = "https://maracatu.org";
 
 // Indexed pages: landing, feed list, individual feed items. Shared
-// conversations (/compartilhar/*) and the authenticated chat area
+// conversations (/share/*) and the authenticated chat area
 // (/chat/*) are intentionally excluded — they are private surfaces.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

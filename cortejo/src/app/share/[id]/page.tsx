@@ -16,7 +16,7 @@ function buildDescription(messages: { content: string; role: string }[]): string
     const cleaned = firstUser.content.replace(/\s+/g, " ").trim();
     return cleaned.length > 157 ? `${cleaned.slice(0, 157)}...` : cleaned;
   }
-  return "Consulta pública sobre gastos públicos brasileiros gerada pela Calunga.";
+  return "Conversa pública sobre gastos públicos brasileiros gerada pela Calunga.";
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -25,14 +25,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!data) {
     return {
-      title: "Maracatu - Consulta não encontrada",
+      title: "Maracatu - Conversa não encontrada",
       robots: { index: false, follow: false },
     };
   }
 
   const description = buildDescription(data.messages);
   const title = `Maracatu - ${data.chat.title}`;
-  const url = `${SITE}/compartilhar/${id}`;
+  const url = `${SITE}/share/${id}`;
 
   return {
     title,
@@ -64,7 +64,7 @@ export default async function SharedPage({ params }: Props) {
   if (!data) notFound();
 
   const description = buildDescription(data.messages);
-  const url = `${SITE}/compartilhar/${id}`;
+  const url = `${SITE}/share/${id}`;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",

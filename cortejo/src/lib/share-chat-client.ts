@@ -18,7 +18,7 @@ export async function shareConversation(chatId: string): Promise<ShareOutcome> {
     return { kind: "error", message: "Não foi possível gerar o link agora. Tente novamente." };
   }
 
-  const url = `${window.location.origin}/compartilhar/${chatId}`;
+  const url = `${window.location.origin}/share/${chatId}`;
 
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
     try {

@@ -180,7 +180,7 @@ async def buscar_conversa(conversa_id: uuid.UUID, current_user: dict = Depends(g
         raise HTTPException(status_code=404, detail="Conversa não encontrada")
     return ConversaDetail(**result)
 
-@router.post("/conversas/{conversa_id}/compartilhar")
+@router.post("/conversas/{conversa_id}/share")
 async def compartilhar_conversa(conversa_id: uuid.UUID, current_user: dict = Depends(get_current_user)):
     pool = get_pool()
     user_id = uuid.UUID(current_user["id"])
@@ -189,7 +189,7 @@ async def compartilhar_conversa(conversa_id: uuid.UUID, current_user: dict = Dep
         raise HTTPException(status_code=404, detail="Conversa não encontrada")
     return {"ok": True}
 
-@router.get("/compartilhar/{conversa_id}", response_model=ConversaDetail)
+@router.get("/share/{conversa_id}", response_model=ConversaDetail)
 async def buscar_conversa_publica(conversa_id: uuid.UUID):
     """Endpoint público — não exige autenticação."""
     pool = get_pool()

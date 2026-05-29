@@ -129,7 +129,7 @@ export async function deleteAllChats() {
 export async function shareChat(chatId: string) {
   const token = await getToken();
   if (!token) return { ok: false };
-  const res = await fetch(`${API_URL}/v1/conversas/${chatId}/compartilhar`, {
+  const res = await fetch(`${API_URL}/v1/conversas/${chatId}/share`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -242,7 +242,7 @@ export async function fetchFeedEvento(id: number): Promise<FeedEvento | null> {
 }
 
 export async function fetchSharedChat(chatId: string) {
-  const res = await fetch(`${API_URL}/v1/compartilhar/${chatId}`, {
+  const res = await fetch(`${API_URL}/v1/share/${chatId}`, {
     cache: "no-store",
   });
   if (!res.ok) return null;
