@@ -1,15 +1,16 @@
 "use client";
 
-import { motion } from "motion/react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
+import { useTypewriter } from "@/lib/use-typewriter";
 import ChartRenderer from "./chart-renderer";
 
 type MessageProps = {
   role: "user" | "model" | "assistant";
   content: string;
+  streaming?: boolean;
 };
 
 const CHART_TYPES = new Set(["bar", "pie", "line"]);
@@ -27,8 +28,9 @@ function tryParseChart(children: any) {
   return null;
 }
 
-export default function ChatMessage({ role, content }: MessageProps) {
+export default function ChatMessage({ role, content, streaming = false }: MessageProps) {
   const isUser = role === "user";
+  const displayed = useTypewriter(content, streaming && !isUser);
 
   if (isUser) {
     return (
@@ -44,13 +46,7 @@ export default function ChatMessage({ role, content }: MessageProps) {
     <div className="flex w-full mb-6 justify-start">
       <div className="flex w-full">
         <div className="flex-1 min-w-0 prose prose-sm md:prose-base dark:prose-invert max-w-none break-words">
-          {!content ? (
-            <div className="flex items-center gap-1 h-6 text-zinc-400 dark:text-zinc-500">
-              <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} className="w-1.5 h-1.5 bg-current rounded-full" />
-              <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} className="w-1.5 h-1.5 bg-current rounded-full" />
-              <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} className="w-1.5 h-1.5 bg-current rounded-full" />
-            </div>
-          ) : (
+          {!displayed ? null : (
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeSanitize]}
@@ -100,7 +96,7 @@ export default function ChatMessage({ role, content }: MessageProps) {
               },
             }}
           >
-            {content}
+            {displayed}
           </ReactMarkdown>
           )}
         </div>

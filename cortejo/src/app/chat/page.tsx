@@ -6,7 +6,8 @@ import { useChat } from "@ai-sdk/react";
 import { motion } from "motion/react";
 import { ArrowUp, Sparkles } from "lucide-react";
 import ChatMessage from "@/components/chat/chat-message";
-import AgentActivity, { parseToolEvents, parseMessageId, DotRingLoader } from "@/components/chat/tool-activity";
+import AgentActivity, { parseToolEvents, parseMessageId } from "@/components/chat/tool-activity";
+import TypingDots from "@/components/chat/typing-dots";
 import MessageActions from "@/components/chat/message-actions";
 import ChatErrorBoundary from "@/components/chat/chat-error-boundary";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
@@ -175,10 +176,10 @@ function ChatPageInner() {
               return (
                 <div key={msg.id}>
                   {isModel && <AgentActivity events={events} status={streaming ? "responding" : "done"} />}
-                  <ChatMessage role={isModel ? "model" : "user"} content={answer} />
-                  {streaming && <DotRingLoader />}
+                  <ChatMessage role={isModel ? "model" : "user"} content={answer} streaming={streaming} />
+                  {streaming && <TypingDots />}
                   {isModel && !streaming && answer && (
-                    <MessageActions content={answer} messageId={dbId} initialFeedback={null} />
+                    <MessageActions content={answer} messageId={dbId} />
                   )}
                 </div>
               );
@@ -187,7 +188,7 @@ function ChatPageInner() {
             {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
               <>
                 <AgentActivity events={toolEvents} status="thinking" />
-                <DotRingLoader />
+                <TypingDots />
               </>
             )}
 

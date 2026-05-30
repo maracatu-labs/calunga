@@ -7,7 +7,8 @@ import { motion } from "motion/react";
 import { ArrowUp } from "lucide-react";
 import { fetchChat } from "@/lib/actions";
 import ChatMessage from "@/components/chat/chat-message";
-import AgentActivity, { parseToolEvents, parseMessageId, DotRingLoader } from "@/components/chat/tool-activity";
+import AgentActivity, { parseToolEvents, parseMessageId } from "@/components/chat/tool-activity";
+import TypingDots from "@/components/chat/typing-dots";
 import MessageActions from "@/components/chat/message-actions";
 import ChatErrorBoundary from "@/components/chat/chat-error-boundary";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
@@ -144,10 +145,10 @@ function ChatIdPageInner() {
             return (
               <div key={msg.id}>
                 {isModel && <AgentActivity events={events} status={streaming ? "responding" : "done"} />}
-                <ChatMessage role={isModel ? "model" : "user"} content={answer} />
-                {streaming && <DotRingLoader />}
+                <ChatMessage role={isModel ? "model" : "user"} content={answer} streaming={streaming} />
+                {streaming && <TypingDots />}
                 {isModel && !streaming && answer && (
-                  <MessageActions content={answer} messageId={dbId} initialFeedback={m?.feedback ?? null} />
+                  <MessageActions content={answer} messageId={dbId} />
                 )}
               </div>
             );
@@ -156,7 +157,7 @@ function ChatIdPageInner() {
           {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
             <>
               <AgentActivity events={toolEvents} status="thinking" />
-              <DotRingLoader />
+              <TypingDots />
             </>
           )}
 
