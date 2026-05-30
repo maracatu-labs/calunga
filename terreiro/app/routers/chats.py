@@ -13,7 +13,6 @@ from app.config import settings
 from app.database import get_pool
 from app.metrics import incr, incr_by_dim, time_ms
 from app.queries import conversas as conversas_q
-from app.queries import feedback as feedback_q
 from app.schemas.chat import ChatRequest
 from app.schemas.conversa import ConversaDetail, ConversaList, ConversaResponse
 from app.services import token_quota
@@ -211,14 +210,6 @@ async def buscar_conversa(conversa_id: uuid.UUID, current_user: dict = Depends(g
     result = await conversas_q.buscar_conversa(pool, conversa_id, user_id=user_id)
     if not result:
         raise HTTPException(status_code=404, detail="Conversa não encontrada")
-    # Feedback is a secondary signal: never let it break loading the conversation.
-    try:
-        votos = await feedback_q.ultimos_feedbacks(pool, conversa_id, user_id)
-    except Exception:
-        logger.exception("failed to load feedback votes for conversa=%s", conversa_id)
-        votos = {}
-    for m in result["mensagens"]:
-        m["feedback"] = votos.get(m["id"])
     return ConversaDetail(**result)
 
 @router.post("/conversas/{conversa_id}/share")
