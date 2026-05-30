@@ -87,6 +87,23 @@ export function parseToolEvents(data: unknown): ToolEvent[] {
   return out;
 }
 
+/**
+ * Lê o id da mensagem persistida no canal `data` do stream. O backend emite
+ * um evento {type:"message", id} logo antes do [DONE], depois de gravar a
+ * resposta. O frontend precisa desse id para enviar feedback da mensagem viva.
+ */
+export function parseMessageId(data: unknown): number | null {
+  if (!Array.isArray(data)) return null;
+  for (let i = data.length - 1; i >= 0; i--) {
+    const item = data[i];
+    if (typeof item === "object" && item !== null) {
+      const obj = item as Record<string, unknown>;
+      if (obj.type === "message" && typeof obj.id === "number") return obj.id;
+    }
+  }
+  return null;
+}
+
 function buildCalls(events: ToolEvent[]): ToolCall[] {
   const result: ToolCall[] = [];
   const openByTool = new Map<string, ToolCall>();

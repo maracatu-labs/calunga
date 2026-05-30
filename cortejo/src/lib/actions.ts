@@ -98,10 +98,29 @@ export async function fetchChat(chatId: string) {
     chat: { id: data.id, title: data.titulo },
     messages: (data.mensagens || []).map((m: any) => ({
       id: m.id?.toString() || crypto.randomUUID(),
+      dbId: typeof m.id === "number" ? m.id : null,
       role: m.role === "assistant" ? "model" : m.role,
       content: m.content,
+      toolCalls: Array.isArray(m.tool_calls) ? m.tool_calls : [],
+      feedback: (m.feedback as "like" | "dislike" | null) ?? null,
     })),
   };
+}
+
+export async function submitFeedback(
+  messageId: number,
+  tipo: "like" | "dislike",
+  categoria?: string,
+  comentario?: string,
+) {
+  const token = await getToken();
+  if (!token) return { ok: false as const };
+  const res = await fetch(`${API_URL}/v1/mensagens/${messageId}/feedback`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ tipo, categoria: categoria || null, comentario: comentario || null }),
+  });
+  return { ok: res.ok };
 }
 
 export async function deleteChat(chatId: string) {
@@ -253,6 +272,7 @@ export async function fetchSharedChat(chatId: string) {
       id: m.id?.toString() || crypto.randomUUID(),
       role: m.role,
       content: m.content,
+      toolCalls: Array.isArray(m.tool_calls) ? m.tool_calls : [],
     })),
   };
 }

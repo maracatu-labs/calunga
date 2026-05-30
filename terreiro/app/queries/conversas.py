@@ -1,6 +1,27 @@
+import json
 import uuid
+from typing import Any
 
 import asyncpg
+
+
+def _decode_messages(rows: list[asyncpg.Record]) -> list[dict]:
+    """Turn message rows into dicts, decoding the tool_calls JSONB column.
+
+    asyncpg returns jsonb as a raw string (no codec is registered on the pool),
+    so we json.loads it back into a list the API can serialize.
+    """
+    out = []
+    for row in rows:
+        msg = dict(row)
+        raw = msg.get("tool_calls")
+        if isinstance(raw, str):
+            try:
+                msg["tool_calls"] = json.loads(raw)
+            except (json.JSONDecodeError, TypeError):
+                msg["tool_calls"] = None
+        out.append(msg)
+    return out
 
 
 async def criar_conversa(
@@ -64,7 +85,7 @@ async def buscar_conversa(
         return None
 
     mensagens = await pool.fetch(
-        "SELECT id, role, content, created_at FROM mensagens WHERE conversa_id = $1 ORDER BY created_at",
+        "SELECT id, role, content, tool_calls, created_at FROM mensagens WHERE conversa_id = $1 ORDER BY created_at",
         conversa_id,
     )
 
@@ -73,21 +94,26 @@ async def buscar_conversa(
         "titulo": conversa["titulo"],
         "created_at": conversa["created_at"],
         "updated_at": conversa["updated_at"],
-        "mensagens": [dict(m) for m in mensagens],
+        "mensagens": _decode_messages(mensagens),
     }
 
 async def adicionar_mensagem(
-    pool: asyncpg.Pool, conversa_id: uuid.UUID, role: str, content: str
+    pool: asyncpg.Pool,
+    conversa_id: uuid.UUID,
+    role: str,
+    content: str,
+    tool_calls: list[Any] | None = None,
 ) -> asyncpg.Record:
     row = await pool.fetchrow(
         """
-        INSERT INTO mensagens (conversa_id, role, content)
-        VALUES ($1, $2, $3)
+        INSERT INTO mensagens (conversa_id, role, content, tool_calls)
+        VALUES ($1, $2, $3, $4::jsonb)
         RETURNING *
         """,
         conversa_id,
         role,
         content,
+        json.dumps(tool_calls) if tool_calls else None,
     )
     await pool.execute(
         "UPDATE conversas SET updated_at = NOW() WHERE id = $1",
@@ -121,7 +147,7 @@ async def buscar_conversa_publica(pool: asyncpg.Pool, conversa_id: uuid.UUID) ->
         return None
 
     mensagens = await pool.fetch(
-        "SELECT id, role, content, created_at FROM mensagens WHERE conversa_id = $1 ORDER BY created_at",
+        "SELECT id, role, content, tool_calls, created_at FROM mensagens WHERE conversa_id = $1 ORDER BY created_at",
         conversa_id,
     )
 
@@ -130,7 +156,7 @@ async def buscar_conversa_publica(pool: asyncpg.Pool, conversa_id: uuid.UUID) ->
         "titulo": conversa["titulo"],
         "created_at": conversa["created_at"],
         "updated_at": conversa["updated_at"],
-        "mensagens": [dict(m) for m in mensagens],
+        "mensagens": _decode_messages(mensagens),
     }
 
 async def deletar_conversa(

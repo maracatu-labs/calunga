@@ -6,7 +6,8 @@ import { useChat } from "@ai-sdk/react";
 import { motion } from "motion/react";
 import { ArrowUp, Sparkles } from "lucide-react";
 import ChatMessage from "@/components/chat/chat-message";
-import AgentActivity, { parseToolEvents, DotRingLoader } from "@/components/chat/tool-activity";
+import AgentActivity, { parseToolEvents, parseMessageId, DotRingLoader } from "@/components/chat/tool-activity";
+import MessageActions from "@/components/chat/message-actions";
 import ChatErrorBoundary from "@/components/chat/chat-error-boundary";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
 
@@ -73,6 +74,7 @@ function ChatPageInner() {
   });
 
   const toolEvents = parseToolEvents(data);
+  const liveMessageId = parseMessageId(data);
 
   useEffect(() => {
     scrollToBottom();
@@ -166,16 +168,18 @@ function ChatPageInner() {
             {messages.map((msg, i) => {
               const isModel = msg.role === "assistant";
               const isLast = i === messages.length - 1;
+              const events = isLast ? toolEvents : [];
+              const streaming = isModel && isLast && isLoading;
+              const dbId = isLast ? liveMessageId : null;
+              const answer = isModel ? stripSuggestions(msg.content) : msg.content;
               return (
                 <div key={msg.id}>
-                  {isModel && isLast && (
-                    <AgentActivity events={toolEvents} status={isLoading ? "responding" : "done"} />
+                  {isModel && <AgentActivity events={events} status={streaming ? "responding" : "done"} />}
+                  <ChatMessage role={isModel ? "model" : "user"} content={answer} />
+                  {streaming && <DotRingLoader />}
+                  {isModel && !streaming && answer && (
+                    <MessageActions content={answer} messageId={dbId} initialFeedback={null} />
                   )}
-                  <ChatMessage
-                    role={isModel ? "model" : "user"}
-                    content={isModel ? stripSuggestions(msg.content) : msg.content}
-                  />
-                  {isModel && isLast && isLoading && <DotRingLoader />}
                 </div>
               );
             })}

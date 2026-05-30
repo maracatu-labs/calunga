@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { MessageSquare, Sparkles } from "lucide-react";
 import ChatMessage from "@/components/chat/chat-message";
+import AgentActivity, { parseToolEvents } from "@/components/chat/tool-activity";
 
-type Message = { id: string; role: "user" | "model"; content: string };
+type Message = { id: string; role: "user" | "model"; content: string; toolCalls?: unknown[] };
 type SharedData = {
   chat: { id: string; title: string };
   messages: Message[];
@@ -83,7 +84,12 @@ export default function SharedConversation({ data }: { data: SharedData }) {
           </div>
 
           {displayMessages.map((msg) => (
-            <ChatMessage key={msg.id} role={msg.role} content={msg.content} />
+            <div key={msg.id}>
+              {msg.role === "model" && (
+                <AgentActivity events={parseToolEvents(msg.toolCalls)} status="done" />
+              )}
+              <ChatMessage role={msg.role} content={msg.content} />
+            </div>
           ))}
         </div>
       </main>
