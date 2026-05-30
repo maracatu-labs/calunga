@@ -6,7 +6,7 @@ import { useChat } from "@ai-sdk/react";
 import { motion } from "motion/react";
 import { ArrowUp, Sparkles } from "lucide-react";
 import ChatMessage from "@/components/chat/chat-message";
-import ToolActivity, { parseToolEvents, StreamingIndicator } from "@/components/chat/tool-activity";
+import AgentActivity, { parseToolEvents, DotRingLoader } from "@/components/chat/tool-activity";
 import ChatErrorBoundary from "@/components/chat/chat-error-boundary";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
 
@@ -168,23 +168,23 @@ function ChatPageInner() {
               const isLast = i === messages.length - 1;
               return (
                 <div key={msg.id}>
-                  {isModel && isLast && toolEvents.length > 0 && (
-                    <ToolActivity events={toolEvents} loading={isLoading} />
+                  {isModel && isLast && (
+                    <AgentActivity events={toolEvents} status={isLoading ? "responding" : "done"} />
                   )}
                   <ChatMessage
                     role={isModel ? "model" : "user"}
                     content={isModel ? stripSuggestions(msg.content) : msg.content}
                   />
+                  {isModel && isLast && isLoading && <DotRingLoader />}
                 </div>
               );
             })}
 
             {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
-              <ToolActivity events={toolEvents} loading />
-            )}
-
-            {isLoading && messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
-              <StreamingIndicator />
+              <>
+                <AgentActivity events={toolEvents} status="thinking" />
+                <DotRingLoader />
+              </>
             )}
 
             {error && (
