@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Check, AlertTriangle, Loader2, Sparkles, ChevronRight, Terminal } from "lucide-react";
+import { AlertTriangle, Loader2, Terminal, Clock, CheckCircle2, ChevronDown } from "lucide-react";
 
 type ToolEvent =
   | {
@@ -25,6 +25,9 @@ type ToolCall = {
   status: "running" | "ok" | "error";
   error?: string;
 };
+
+/** Fase do agente, derivada do estado do stream pela página. */
+type AgentStatus = "thinking" | "responding" | "done";
 
 const TOOL_LABELS: Record<string, string> = {
   buscar_despesas: "Buscando despesas",
@@ -104,130 +107,197 @@ function buildCalls(events: ToolEvent[]): ToolCall[] {
   return result;
 }
 
-function StepIcon({ status }: { status: ToolCall["status"] }) {
-  if (status === "running") return <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 dark:text-zinc-500" />;
-  if (status === "error") return <AlertTriangle className="w-3.5 h-3.5 text-red-500" />;
-  return <Terminal className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />;
+/**
+ * Texto dinâmico do cabeçalho. Muda em tempo real conforme o agente avança,
+ * dando um feedback fluido do que está acontecendo agora.
+ */
+function headerLabel(status: AgentStatus, calls: ToolCall[]): string {
+  if (status !== "thinking") {
+    const n = calls.length;
+    return `Consultei ${n} ${n === 1 ? "fonte oficial" : "fontes oficiais"}`;
+  }
+  const running = calls.find((c) => c.status === "running");
+  if (running) return (TOOL_LABELS[running.tool] || running.tool) + "…";
+  if (calls.length === 0) return "Pensando…";
+  return "Reunindo as fontes…";
+}
+
+/** Ícone da esquerda de cada nó do trilho. Mascara a linha com o bg da página. */
+function RailNode({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="absolute -left-[30px] top-0 flex items-center justify-center w-6 h-6 bg-white dark:bg-[#212121]">
+      {children}
+    </span>
+  );
+}
+
+function ToolIcon({ status }: { status: ToolCall["status"] }) {
+  if (status === "running") return <Loader2 className="w-4 h-4 animate-spin text-zinc-400 dark:text-zinc-500" />;
+  if (status === "error") return <AlertTriangle className="w-4 h-4 text-red-500" />;
+  return <Terminal className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />;
 }
 
 /**
- * Timeline de raciocínio da Calunga (estilo dropdown), inspirada no padrão
- * de "tools/etapas" do claude.ai mas com a identidade do Maracatu.
- *
- * - Enquanto `loading`: cabeçalho animado "Analisando dados…" + a timeline
- *   das ferramentas (trilho vertical, cada passo com ícone + chip de args).
- * - Quando termina: colapsa num resumo "Consultei N fontes oficiais",
- *   expansível por clique para rever a timeline.
- *
- * Renderiza acima da resposta da LLM. O indicador de "escrevendo" fica
- * separado, abaixo do texto (ver StreamingIndicator).
+ * Loader de bolinhas em anel (estilo claude.ai), na cor da marca (emerald).
+ * Um anel de pontos com opacidade graduada gira continuamente, criando o
+ * efeito de "cometa". Fica abaixo da resposta enquanto ela é gerada.
  */
-export default function ToolActivity({
+export function DotRingLoader() {
+  const dots = Array.from({ length: 12 });
+  return (
+    <motion.div
+      aria-label="Gerando resposta"
+      role="status"
+      className="relative w-5 h-5 my-3"
+      animate={{ rotate: 360 }}
+      transition={{ repeat: Infinity, duration: 1.1, ease: "linear" }}
+    >
+      {dots.map((_, i) => (
+        <span
+          key={i}
+          className="absolute left-1/2 top-1/2 w-[3px] h-[3px] rounded-full bg-emerald-500"
+          style={{
+            transform: `rotate(${i * 30}deg) translateY(-8px)`,
+            transformOrigin: "center",
+            marginLeft: "-1.5px",
+            marginTop: "-1.5px",
+            opacity: 0.15 + (i / dots.length) * 0.85,
+          }}
+        />
+      ))}
+    </motion.div>
+  );
+}
+
+/**
+ * Atividade da Calunga, fixada sempre acima da resposta da LLM.
+ *
+ * - Cabeçalho com texto dinâmico ("Pensando" -> nome da tool atual -> resumo),
+ *   que muda em tempo real para dar feedback fluido.
+ * - Dropdown colapsado por padrão (mesmo durante o loading) com a timeline de
+ *   raciocínio + tools consultadas. O usuário abre/fecha pelo chevron.
+ *
+ * Não há cadeia de raciocínio real do modelo: o nó "Pensando" é um indicador
+ * de fase honesto (interpretação da pergunta), não texto gerado pela LLM.
+ *
+ * O loader de geração da resposta (DotRingLoader) é separado e fica abaixo
+ * da mensagem, não dentro deste componente.
+ */
+export default function AgentActivity({
   events,
-  loading,
+  status,
 }: {
   events: ToolEvent[];
-  loading: boolean;
+  status: AgentStatus;
 }) {
   const calls = useMemo(() => buildCalls(events), [events]);
   const [expanded, setExpanded] = useState(false);
 
-  if (!loading && calls.length === 0) return null;
-
-  const open = loading || expanded;
   const n = calls.length;
-  const headerLabel = loading
-    ? "Analisando dados…"
-    : `Consultei ${n} ${n === 1 ? "fonte oficial" : "fontes oficiais"}`;
+  const thinking = status === "thinking";
+  const toolsDone = status !== "thinking";
+
+  // Sem nenhuma tool fora da fase de "pensando": nada estrutural a mostrar.
+  if (!thinking && n === 0) return null;
+
+  const label = headerLabel(status, calls);
+  const hasTimeline = n > 0;
 
   return (
     <div className="mb-4">
       <button
         type="button"
-        onClick={() => !loading && setExpanded((v) => !v)}
-        aria-expanded={open}
-        disabled={loading}
+        onClick={() => hasTimeline && setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        disabled={!hasTimeline}
         className="group flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 disabled:cursor-default"
       >
         <motion.span
-          animate={loading ? { opacity: [0.45, 1, 0.45] } : { opacity: 1 }}
-          transition={loading ? { repeat: Infinity, duration: 1.4, ease: "easeInOut" } : { duration: 0.2 }}
-          className="flex"
+          key={label}
+          initial={{ opacity: 0, y: 2 }}
+          animate={
+            thinking
+              ? { opacity: [0.55, 1, 0.55], y: 0 }
+              : { opacity: 1, y: 0 }
+          }
+          transition={
+            thinking
+              ? { opacity: { repeat: Infinity, duration: 1.6, ease: "easeInOut" }, y: { duration: 0.2 } }
+              : { duration: 0.2 }
+          }
+          className="font-medium"
         >
-          <Sparkles className="w-4 h-4 text-emerald-500" />
+          {label}
         </motion.span>
-        <span className="font-medium">{headerLabel}</span>
-        {!loading && (
-          <ChevronRight
-            className={"w-3.5 h-3.5 transition-transform group-hover:text-zinc-700 dark:group-hover:text-zinc-200 " + (open ? "rotate-90" : "")}
+        {hasTimeline && (
+          <ChevronDown
+            className={
+              "w-4 h-4 transition-transform group-hover:text-zinc-700 dark:group-hover:text-zinc-200 " +
+              (expanded ? "rotate-180" : "")
+            }
           />
         )}
       </button>
 
       <AnimatePresence initial={false}>
-        {open && n > 0 && (
+        {expanded && hasTimeline && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.18 }}
+            transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="relative mt-2 ml-[7px] pl-5">
-              <div className="absolute left-0 top-1 bottom-2 w-px bg-zinc-200 dark:bg-zinc-800" />
+            <div className="relative mt-3 ml-[15px] pl-[30px]">
+              <div className="absolute left-[11px] top-2 bottom-2 w-px bg-zinc-200 dark:bg-zinc-800" />
+
+              {/* Nó de raciocínio (indicador de fase, sem CoT real) */}
+              <div className="relative flex items-start pb-5">
+                <RailNode>
+                  <Clock className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+                </RailNode>
+                <span className="text-sm text-zinc-700 dark:text-zinc-200">
+                  {thinking ? "Interpretando sua pergunta" : "Interpretei sua pergunta"}
+                </span>
+              </div>
+
+              {/* Nós de tools */}
               {calls.map((call) => {
-                const label = TOOL_LABELS[call.tool] || call.tool;
+                const toolLabel = TOOL_LABELS[call.tool] || call.tool;
                 const chip = summarizeArgs(call.args);
                 return (
-                  <div key={call.id} className="relative flex items-start gap-2.5 pb-3 last:pb-0">
-                    <span className="absolute -left-[26px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-white dark:bg-[#212121]">
-                      <StepIcon status={call.status} />
-                    </span>
-                    <div className="min-w-0 text-xs">
-                      <span className="text-zinc-600 dark:text-zinc-300">{label}</span>
-                      {chip && (
-                        <span className="ml-2 inline-block px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800/70 text-zinc-500 dark:text-zinc-400 align-middle max-w-[260px] truncate">
-                          {chip}
-                        </span>
-                      )}
-                      {call.status === "error" && call.error && (
-                        <span className="block text-red-500 mt-1">{call.error.slice(0, 120)}</span>
-                      )}
+                  <div key={call.id} className="relative flex flex-col pb-5">
+                    <div className="flex items-start">
+                      <RailNode>
+                        <ToolIcon status={call.status} />
+                      </RailNode>
+                      <span className="text-sm text-zinc-500 dark:text-zinc-400">{toolLabel}</span>
                     </div>
+                    {chip && (
+                      <span className="mt-1.5 self-start px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs text-zinc-500 dark:text-zinc-400 max-w-[280px] truncate">
+                        {chip}
+                      </span>
+                    )}
+                    {call.status === "error" && call.error && (
+                      <span className="mt-1.5 text-xs text-red-500">{call.error.slice(0, 120)}</span>
+                    )}
                   </div>
                 );
               })}
-              {!loading && (
-                <div className="relative flex items-center gap-2.5">
-                  <span className="absolute -left-[26px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-white dark:bg-[#212121]">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500" />
-                  </span>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Concluído</span>
+
+              {/* Nó final */}
+              {toolsDone && (
+                <div className="relative flex items-center">
+                  <RailNode>
+                    <CheckCircle2 className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+                  </RailNode>
+                  <span className="text-sm text-zinc-500 dark:text-zinc-400">Concluído</span>
                 </div>
               )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-/**
- * Indicador de "escrevendo" que fica abaixo do texto já streamado,
- * enquanto a resposta ainda está sendo gerada.
- */
-export function StreamingIndicator() {
-  return (
-    <div className="flex items-center gap-2 mt-1 mb-4 text-sm text-zinc-400 dark:text-zinc-500">
-      <motion.span
-        animate={{ opacity: [0.45, 1, 0.45] }}
-        transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
-        className="flex"
-      >
-        <Sparkles className="w-4 h-4 text-emerald-500" />
-      </motion.span>
-      <span className="italic">Escrevendo resposta…</span>
     </div>
   );
 }
