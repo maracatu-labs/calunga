@@ -155,38 +155,6 @@ function ToolIcon({ status }: { status: ToolCall["status"] }) {
 }
 
 /**
- * Loader de bolinhas em anel (estilo claude.ai), na cor da marca (emerald).
- * Um anel de pontos com opacidade graduada gira continuamente, criando o
- * efeito de "cometa". Fica abaixo da resposta enquanto ela é gerada.
- */
-export function DotRingLoader() {
-  const dots = Array.from({ length: 12 });
-  return (
-    <motion.div
-      aria-label="Gerando resposta"
-      role="status"
-      className="relative w-5 h-5 my-3"
-      animate={{ rotate: 360 }}
-      transition={{ repeat: Infinity, duration: 1.1, ease: "linear" }}
-    >
-      {dots.map((_, i) => (
-        <span
-          key={i}
-          className="absolute left-1/2 top-1/2 w-[3px] h-[3px] rounded-full bg-emerald-500"
-          style={{
-            transform: `rotate(${i * 30}deg) translateY(-8px)`,
-            transformOrigin: "center",
-            marginLeft: "-1.5px",
-            marginTop: "-1.5px",
-            opacity: 0.15 + (i / dots.length) * 0.85,
-          }}
-        />
-      ))}
-    </motion.div>
-  );
-}
-
-/**
  * Atividade da Calunga, fixada sempre acima da resposta da LLM.
  *
  * - Cabeçalho com texto dinâmico ("Pensando" -> nome da tool atual -> resumo),
@@ -197,7 +165,7 @@ export function DotRingLoader() {
  * Não há cadeia de raciocínio real do modelo: o nó "Pensando" é um indicador
  * de fase honesto (interpretação da pergunta), não texto gerado pela LLM.
  *
- * O loader de geração da resposta (DotRingLoader) é separado e fica abaixo
+ * O loader de geração da resposta (TypingDots) é separado e fica abaixo
  * da mensagem, não dentro deste componente.
  */
 export default function AgentActivity({

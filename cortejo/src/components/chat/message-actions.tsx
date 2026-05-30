@@ -4,9 +4,6 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Copy, Check, ThumbsUp, ThumbsDown } from "lucide-react";
 import { submitFeedback } from "@/lib/actions";
-import { cn } from "@/lib/utils";
-
-type Vote = "like" | "dislike" | null;
 
 const DISLIKE_CATEGORIES = [
   "Informação incorreta",
@@ -15,26 +12,24 @@ const DISLIKE_CATEGORIES = [
   "Ofensivo ou inadequado",
 ];
 
+const iconButton =
+  "p-1.5 rounded-lg text-zinc-400 dark:text-zinc-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors";
+
 /**
  * Barra de ações abaixo de cada resposta da Calunga: copiar, curtir e não
- * curtir. O voto é append-only no banco, mas a UI destaca o último voto.
- * Clicar num polegar abre um modal de detalhe opcional (categoria + comentário);
- * fechar o modal (submit ou cancelar) registra o voto.
+ * curtir. Os polegares ficam sempre disponíveis e neutros (sem estado de
+ * selecionado, sem mudar de cor): clicar abre um modal de detalhe opcional
+ * (categoria + comentário) e fechar o modal registra o feedback (append-only).
  */
 export default function MessageActions({
   content,
   messageId,
-  initialFeedback = null,
 }: {
   content: string;
   messageId: number | null;
-  initialFeedback?: Vote;
 }) {
   const [copied, setCopied] = useState(false);
-  const [vote, setVote] = useState<Vote>(initialFeedback);
   const [modalTipo, setModalTipo] = useState<"like" | "dislike" | null>(null);
-
-  const canVote = messageId != null;
 
   const handleCopy = useCallback(async () => {
     try {
@@ -46,12 +41,6 @@ export default function MessageActions({
     }
   }, [content]);
 
-  const openVote = useCallback((tipo: "like" | "dislike") => {
-    if (!canVote) return;
-    setVote(tipo);
-    setModalTipo(tipo);
-  }, [canVote]);
-
   const send = useCallback(
     async (tipo: "like" | "dislike", categoria?: string, comentario?: string) => {
       if (messageId == null) return;
@@ -61,49 +50,29 @@ export default function MessageActions({
   );
 
   return (
-    <div className="flex items-center gap-1 -mt-2 mb-6 text-zinc-400 dark:text-zinc-500">
-      <button
-        type="button"
-        onClick={handleCopy}
-        aria-label="Copiar resposta"
-        title="Copiar"
-        className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
-      >
-        {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+    <div className="flex items-center gap-1 -mt-2 mb-6">
+      <button type="button" onClick={handleCopy} aria-label="Copiar resposta" title="Copiar" className={iconButton}>
+        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
       </button>
 
       <button
         type="button"
-        onClick={() => openVote("like")}
-        disabled={!canVote}
+        onClick={() => setModalTipo("like")}
         aria-label="Resposta útil"
-        aria-pressed={vote === "like"}
         title="Resposta útil"
-        className={cn(
-          "p-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-default",
-          vote === "like"
-            ? "text-emerald-600 dark:text-emerald-500"
-            : "hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-700 dark:hover:text-zinc-200",
-        )}
+        className={iconButton}
       >
-        <ThumbsUp className="w-4 h-4" fill={vote === "like" ? "currentColor" : "none"} />
+        <ThumbsUp className="w-4 h-4" />
       </button>
 
       <button
         type="button"
-        onClick={() => openVote("dislike")}
-        disabled={!canVote}
+        onClick={() => setModalTipo("dislike")}
         aria-label="Resposta não útil"
-        aria-pressed={vote === "dislike"}
         title="Resposta não útil"
-        className={cn(
-          "p-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-default",
-          vote === "dislike"
-            ? "text-rose-500"
-            : "hover:bg-black/5 dark:hover:bg-white/5 hover:text-zinc-700 dark:hover:text-zinc-200",
-        )}
+        className={iconButton}
       >
-        <ThumbsDown className="w-4 h-4" fill={vote === "dislike" ? "currentColor" : "none"} />
+        <ThumbsDown className="w-4 h-4" />
       </button>
 
       <AnimatePresence>
