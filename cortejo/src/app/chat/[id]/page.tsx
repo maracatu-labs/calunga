@@ -7,9 +7,13 @@ import { motion } from "motion/react";
 import { ArrowUp } from "lucide-react";
 import { fetchChat } from "@/lib/actions";
 import ChatMessage from "@/components/chat/chat-message";
-import AgentActivity, { parseToolEvents, DotRingLoader } from "@/components/chat/tool-activity";
+import AgentActivity, { parseToolEvents, parseMessageId, DotRingLoader } from "@/components/chat/tool-activity";
+import MessageActions from "@/components/chat/message-actions";
 import ChatErrorBoundary from "@/components/chat/chat-error-boundary";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
+
+type Vote = "like" | "dislike" | null;
+type MessageMeta = { dbId: number | null; toolCalls: unknown[]; feedback: Vote };
 
 export default function ChatIdPage() {
   return (
@@ -24,6 +28,7 @@ function ChatIdPageInner() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [followUps, setFollowUps] = useState<string[]>([]);
   const [localInput, setLocalInput] = useState("");
+  const [meta, setMeta] = useState<Record<string, MessageMeta>>({});
   const loaded = useRef(false);
   const { scrollContainerRef, handleScroll, scrollToBottom, resetScroll } = useAutoScroll();
 
@@ -57,6 +62,7 @@ function ChatIdPageInner() {
   });
 
   const toolEvents = parseToolEvents(data);
+  const liveMessageId = parseMessageId(data);
 
   useEffect(() => {
     scrollToBottom();
@@ -72,6 +78,11 @@ function ChatIdPageInner() {
           content: m.content,
         }));
         setMessages(mapped);
+        const metaMap: Record<string, MessageMeta> = {};
+        for (const m of data.messages as any[]) {
+          metaMap[m.id] = { dbId: m.dbId ?? null, toolCalls: m.toolCalls ?? [], feedback: m.feedback ?? null };
+        }
+        setMeta(metaMap);
         const lastMsg = data.messages[data.messages.length - 1];
         if (lastMsg) extractFollowUps(lastMsg.content);
       }
@@ -125,16 +136,19 @@ function ChatIdPageInner() {
           {messages.map((msg, i) => {
             const isModel = msg.role === "assistant";
             const isLast = i === messages.length - 1;
+            const m = meta[msg.id];
+            const events = m ? parseToolEvents(m.toolCalls) : (isLast ? toolEvents : []);
+            const streaming = isModel && isLast && isLoading;
+            const dbId = m?.dbId ?? (isLast ? liveMessageId : null);
+            const answer = isModel ? stripSuggestions(msg.content) : msg.content;
             return (
               <div key={msg.id}>
-                {isModel && isLast && (
-                  <AgentActivity events={toolEvents} status={isLoading ? "responding" : "done"} />
+                {isModel && <AgentActivity events={events} status={streaming ? "responding" : "done"} />}
+                <ChatMessage role={isModel ? "model" : "user"} content={answer} />
+                {streaming && <DotRingLoader />}
+                {isModel && !streaming && answer && (
+                  <MessageActions content={answer} messageId={dbId} initialFeedback={m?.feedback ?? null} />
                 )}
-                <ChatMessage
-                  role={isModel ? "model" : "user"}
-                  content={isModel ? stripSuggestions(msg.content) : msg.content}
-                />
-                {isModel && isLast && isLoading && <DotRingLoader />}
               </div>
             );
           })}

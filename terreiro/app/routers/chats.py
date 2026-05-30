@@ -13,6 +13,7 @@ from app.config import settings
 from app.database import get_pool
 from app.metrics import incr, incr_by_dim, time_ms
 from app.queries import conversas as conversas_q
+from app.queries import feedback as feedback_q
 from app.schemas.chat import ChatRequest
 from app.schemas.conversa import ConversaDetail, ConversaList, ConversaResponse
 from app.services import token_quota
@@ -138,26 +139,58 @@ async def _stream_and_persist(
     agent, messages, pool, conversa_id, config=None,
     user_id: str | None = None, input_chars: int = 0,
 ):
-    """Stream agent response and persist the full assistant message at the end."""
-    full_response = []
+    """Stream agent response and persist the full assistant message at the end.
+
+    Besides the final text, this collects the tool_start/tool_end events so the
+    activity timeline can be rebuilt on reload, and emits a final `message` event
+    carrying the persisted message id (the client needs it to submit feedback).
+    The inner [DONE] is swallowed so we can persist first and emit our own.
+    """
+    import json
+
+    full_response: list[str] = []
+    tool_events: list[dict] = []
 
     async for event in stream_agent_response(agent, messages, config=config):
+        if isinstance(event, dict) and event.get("data") == "[DONE]":
+            # Persist before signalling completion; we emit [DONE] ourselves below.
+            continue
+
         yield event
 
         if isinstance(event, dict) and "data" in event:
             try:
-                import json
                 data = json.loads(event["data"])
-                if data.get("type") == "text" and data.get("content"):
-                    full_response.append(data["content"])
             except (json.JSONDecodeError, TypeError):
-                pass
+                continue
+            kind = data.get("type")
+            if kind == "text" and data.get("content"):
+                full_response.append(data["content"])
+            elif kind == "tool_start":
+                tool_events.append({
+                    "type": "tool_start",
+                    "tool": data.get("tool"),
+                    "args": data.get("args") or {},
+                })
+            elif kind == "tool_end":
+                event_payload = {"type": "tool_end", "tool": data.get("tool"), "status": data.get("status")}
+                if data.get("error"):
+                    event_payload["error"] = data["error"]
+                tool_events.append(event_payload)
 
+    message_id: int | None = None
     if full_response:
         content = "".join(full_response)
-        await conversas_q.adicionar_mensagem(pool, conversa_id, "assistant", content)
+        row = await conversas_q.adicionar_mensagem(
+            pool, conversa_id, "assistant", content, tool_calls=tool_events or None,
+        )
+        message_id = row["id"]
         if user_id:
             await token_quota.record_usage(user_id, input_chars, len(content))
+
+    if message_id is not None:
+        yield {"data": json.dumps({"type": "message", "id": message_id})}
+    yield {"data": "[DONE]"}
 
 @router.get("/conversas", response_model=ConversaList)
 async def listar_conversas(
@@ -178,6 +211,9 @@ async def buscar_conversa(conversa_id: uuid.UUID, current_user: dict = Depends(g
     result = await conversas_q.buscar_conversa(pool, conversa_id, user_id=user_id)
     if not result:
         raise HTTPException(status_code=404, detail="Conversa não encontrada")
+    votos = await feedback_q.ultimos_feedbacks(pool, conversa_id, user_id)
+    for m in result["mensagens"]:
+        m["feedback"] = votos.get(m["id"])
     return ConversaDetail(**result)
 
 @router.post("/conversas/{conversa_id}/share")

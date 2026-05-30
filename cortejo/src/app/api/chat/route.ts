@@ -70,9 +70,11 @@ export async function POST(req: Request) {
                 );
               } else if (
                 parsed.type === "tool_start" ||
-                parsed.type === "tool_end"
+                parsed.type === "tool_end" ||
+                parsed.type === "message"
               ) {
-
+                // tool activity + the persisted message id, forwarded into the
+                // AI SDK `data` channel for the activity timeline and feedback.
                 controller.enqueue(
                   encoder.encode(`2:${JSON.stringify([parsed])}\n`)
                 );

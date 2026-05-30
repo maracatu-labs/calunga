@@ -9,7 +9,7 @@ from app.cache import close_redis
 from app.config import settings
 from app.database import close_pool, create_pool
 from app.middleware import RateLimitMiddleware
-from app.routers import auth, chats, deputados, exportacao, feed, health, metrics, senadores, suspeitas
+from app.routers import auth, chats, deputados, exportacao, feed, feedback, health, metrics, senadores, suspeitas
 
 # uvicorn only configures its own loggers; app-namespaced loggers default to
 # WARNING, which silences operational signal (magic_link_sent, cache.hit,
@@ -60,4 +60,5 @@ app.include_router(chats.router)
 app.include_router(exportacao.router)
 app.include_router(suspeitas.router)
 app.include_router(feed.router)
+app.include_router(feedback.router)
 app.include_router(metrics.router)
