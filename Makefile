@@ -47,7 +47,7 @@ logs-web: ## Ver logs só do frontend
 	docker compose logs -f web
 
 db-migrate: ## Rodar migrations SQL
-	docker compose exec api python /scripts/migrate.py
+	docker compose exec -T api python /scripts/migrate.py
 
 db-shell: ## Abrir psql no container
 	docker compose exec db psql -U maracatu -d maracatu
