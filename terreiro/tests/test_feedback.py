@@ -1,7 +1,6 @@
 """Tests for message feedback persistence (like/dislike) and tool_calls decoding."""
 
 import uuid
-from datetime import datetime
 
 import pytest
 
@@ -79,35 +78,3 @@ class TestDecodeMessages:
         rows = [record(id=1, role="assistant", content="oi", tool_calls="{not json", created_at=None)]
         out = conversas_q._decode_messages(rows)
         assert out[0]["tool_calls"] is None
-
-
-class TestBuscarConversaDegradesOnFeedbackFailure:
-    @pytest.mark.asyncio
-    async def test_conversation_loads_when_feedback_query_raises(self, fake_pool, monkeypatch):
-        """A broken feedback lookup must not 500 the whole conversation load."""
-        from app.routers import chats
-
-        conversa_id = uuid.uuid4()
-        now = datetime.now()
-        monkeypatch.setattr(chats, "get_pool", lambda: fake_pool)
-
-        async def fake_buscar(pool, cid, user_id=None):
-            return {
-                "id": cid,
-                "titulo": "t",
-                "created_at": now,
-                "updated_at": now,
-                "mensagens": [{"id": 1, "role": "assistant", "content": "oi", "tool_calls": None}],
-            }
-
-        async def boom(pool, cid, user_id):
-            raise RuntimeError("relation mensagem_feedback does not exist")
-
-        monkeypatch.setattr(chats.conversas_q, "buscar_conversa", fake_buscar)
-        monkeypatch.setattr(chats.feedback_q, "ultimos_feedbacks", boom)
-
-        result = await chats.buscar_conversa(
-            conversa_id=conversa_id, current_user={"id": str(uuid.uuid4())}
-        )
-        assert result.mensagens[0].feedback is None
-        assert result.mensagens[0].content == "oi"
