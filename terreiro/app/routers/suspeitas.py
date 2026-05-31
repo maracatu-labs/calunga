@@ -1,5 +1,7 @@
 """Endpoints de suspeitas com validação human-in-the-loop."""
 
+import uuid
+
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
@@ -65,7 +67,7 @@ class ValidarSuspeitaRequest(BaseModel):
     validada_por: str | None = None
 
 @router.patch("/{suspeita_id}")
-async def validar_suspeita(suspeita_id: int, body: ValidarSuspeitaRequest):
+async def validar_suspeita(suspeita_id: uuid.UUID, body: ValidarSuspeitaRequest):
     """Valida ou rejeita uma suspeita (human-in-the-loop)."""
     pool = get_pool()
 

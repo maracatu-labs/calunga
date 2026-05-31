@@ -1,4 +1,4 @@
-.PHONY: help setup dev up down restart logs db-migrate api web health test-api test-chat clean
+.PHONY: help setup dev up down restart logs db-migrate db-migrate-mark api web health test-api test-chat clean
 
 help: ## Mostrar comandos disponíveis
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -46,8 +46,11 @@ logs-api: ## Ver logs só da API
 logs-web: ## Ver logs só do frontend
 	docker compose logs -f web
 
-db-migrate: ## Rodar migrations SQL
+db-migrate: ## Rodar migrations pendentes (yoyo apply)
 	docker compose exec -T api python /scripts/migrate.py
+
+db-migrate-mark: ## Marcar migrations legadas como aplicadas sem rodar SQL (yoyo mark, uso unico)
+	docker compose exec -T api python /scripts/migrate.py --mark-only
 
 db-shell: ## Abrir psql no container
 	docker compose exec db psql -U maracatu -d maracatu

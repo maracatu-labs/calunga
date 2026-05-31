@@ -1,13 +1,14 @@
 from datetime import date, datetime
 from decimal import Decimal
+from uuid import UUID
 
 from pydantic import BaseModel
 
 
 class DespesaResponse(BaseModel):
-    id: int
+    id: UUID
     id_externo: str | None = None
-    parlamentar_id: int
+    parlamentar_id: UUID
     parlamentar_nome: str | None = None
     partido: str | None = None
     uf: str | None = None

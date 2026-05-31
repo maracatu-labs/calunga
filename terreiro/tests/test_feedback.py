@@ -12,27 +12,28 @@ from tests.conftest import record
 class TestRegistrarFeedback:
     @pytest.mark.asyncio
     async def test_returns_true_when_row_inserted(self, fake_pool):
-        fake_pool.fetchrow.return_value = record(id=1)
-        ok = await feedback_q.registrar_feedback(fake_pool, 10, uuid.uuid4(), "like")
+        fake_pool.fetchrow.return_value = record(id=uuid.uuid4())
+        ok = await feedback_q.registrar_feedback(fake_pool, uuid.uuid4(), uuid.uuid4(), "like")
         assert ok is True
 
     @pytest.mark.asyncio
     async def test_returns_false_when_not_owned_or_missing(self, fake_pool):
         fake_pool.fetchrow.return_value = None
         ok = await feedback_q.registrar_feedback(
-            fake_pool, 10, uuid.uuid4(), "dislike", "Informação incorreta", "errou o partido"
+            fake_pool, uuid.uuid4(), uuid.uuid4(), "dislike", "Informação incorreta", "errou o partido"
         )
         assert ok is False
 
     @pytest.mark.asyncio
     async def test_passes_optional_details_as_params(self, fake_pool):
-        fake_pool.fetchrow.return_value = record(id=2)
+        fake_pool.fetchrow.return_value = record(id=uuid.uuid4())
+        mensagem_id = uuid.uuid4()
         await feedback_q.registrar_feedback(
-            fake_pool, 7, uuid.uuid4(), "dislike", "Link ou fonte incorreta", "link errado"
+            fake_pool, mensagem_id, uuid.uuid4(), "dislike", "Link ou fonte incorreta", "link errado"
         )
         args = fake_pool.fetchrow.call_args.args
         # ($1 query, mensagem_id, user_id, tipo, categoria, comentario)
-        assert args[1] == 7
+        assert args[1] == mensagem_id
         assert args[3] == "dislike"
         assert args[4] == "Link ou fonte incorreta"
         assert args[5] == "link errado"
@@ -41,12 +42,13 @@ class TestRegistrarFeedback:
 class TestUltimosFeedbacks:
     @pytest.mark.asyncio
     async def test_maps_message_id_to_latest_tipo(self, fake_pool):
+        m1, m2 = uuid.uuid4(), uuid.uuid4()
         fake_pool.fetch.return_value = [
-            record(mensagem_id=1, tipo="like"),
-            record(mensagem_id=2, tipo="dislike"),
+            record(mensagem_id=m1, tipo="like"),
+            record(mensagem_id=m2, tipo="dislike"),
         ]
         out = await feedback_q.ultimos_feedbacks(fake_pool, uuid.uuid4(), uuid.uuid4())
-        assert out == {1: "like", 2: "dislike"}
+        assert out == {m1: "like", m2: "dislike"}
 
     @pytest.mark.asyncio
     async def test_empty_when_no_feedback(self, fake_pool):

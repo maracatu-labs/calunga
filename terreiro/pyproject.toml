@@ -24,6 +24,11 @@ dependencies = [
     "pydantic[email]>=2.0",
     "sse-starlette>=2.0.0",
     "yoyo-migrations>=8.0.0",
+    # yoyo's PostgresqlBackend hard-requires the psycopg2 driver
+    # (PostgresqlBackend.driver_module == "psycopg2"); without it `yoyo apply`/`yoyo
+    # mark` raise ModuleNotFoundError before any connection attempt. asyncpg (used by
+    # the app at runtime) is not yoyo-compatible, so the runner needs psycopg2.
+    "psycopg2-binary>=2.9.0",
     "sentence-transformers>=3.0.0",
     "sentry-sdk[fastapi]>=2.0.0",
 ]

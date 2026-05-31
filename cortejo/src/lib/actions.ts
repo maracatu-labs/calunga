@@ -98,7 +98,7 @@ export async function fetchChat(chatId: string) {
     chat: { id: data.id, title: data.titulo },
     messages: (data.mensagens || []).map((m: any) => ({
       id: m.id?.toString() || crypto.randomUUID(),
-      dbId: typeof m.id === "number" ? m.id : null,
+      dbId: typeof m.id === "string" ? m.id : null,
       role: m.role === "assistant" ? "model" : m.role,
       content: m.content,
       toolCalls: Array.isArray(m.tool_calls) ? m.tool_calls : [],
@@ -108,7 +108,7 @@ export async function fetchChat(chatId: string) {
 }
 
 export async function submitFeedback(
-  messageId: number,
+  messageId: string,
   tipo: "like" | "dislike",
   categoria?: string,
   comentario?: string,
@@ -214,7 +214,7 @@ export type FeedDadosRicos = {
 };
 
 export type FeedEvento = {
-  id: number;
+  id: string;
   tipo: string;
   categoria: string;
   origem: string;
@@ -225,7 +225,7 @@ export type FeedEvento = {
   created_at: string;
   updated_at?: string;
   referencia_tipo?: string | null;
-  referencia_id?: number | null;
+  referencia_id?: string | null;
 };
 
 export async function fetchFeed(params?: {
@@ -252,7 +252,7 @@ export async function fetchFeed(params?: {
   };
 }
 
-export async function fetchFeedEvento(id: number): Promise<FeedEvento | null> {
+export async function fetchFeedEvento(id: string): Promise<FeedEvento | null> {
   const res = await fetch(`${API_URL}/v1/feed/${id}`, {
     next: { revalidate: 30 },
   });

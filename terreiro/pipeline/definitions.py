@@ -780,7 +780,7 @@ def suspeitas(context: AssetExecutionContext):
                         FROM despesas d
                         JOIN parlamentares p ON d.parlamentar_id = p.id
                         LEFT JOIN empresas e ON regexp_replace(d.cnpj_cpf, '\\D', '', 'g') = e.cnpj
-                        WHERE d.id = ANY($1::int[])""",
+                        WHERE d.id = ANY($1::uuid[])""",
                         despesa_ids,
                     )
                     despesa_map = {row["id"]: row for row in rows}

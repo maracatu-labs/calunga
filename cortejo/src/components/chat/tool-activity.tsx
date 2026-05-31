@@ -92,13 +92,13 @@ export function parseToolEvents(data: unknown): ToolEvent[] {
  * um evento {type:"message", id} logo antes do [DONE], depois de gravar a
  * resposta. O frontend precisa desse id para enviar feedback da mensagem viva.
  */
-export function parseMessageId(data: unknown): number | null {
+export function parseMessageId(data: unknown): string | null {
   if (!Array.isArray(data)) return null;
   for (let i = data.length - 1; i >= 0; i--) {
     const item = data[i];
     if (typeof item === "object" && item !== null) {
       const obj = item as Record<string, unknown>;
-      if (obj.type === "message" && typeof obj.id === "number") return obj.id;
+      if (obj.type === "message" && typeof obj.id === "string") return obj.id;
     }
   }
   return null;

@@ -177,7 +177,7 @@ async def _stream_and_persist(
                     event_payload["error"] = data["error"]
                 tool_events.append(event_payload)
 
-    message_id: int | None = None
+    message_id: uuid.UUID | None = None
     if full_response:
         content = "".join(full_response)
         row = await conversas_q.adicionar_mensagem(
@@ -188,7 +188,7 @@ async def _stream_and_persist(
             await token_quota.record_usage(user_id, input_chars, len(content))
 
     if message_id is not None:
-        yield {"data": json.dumps({"type": "message", "id": message_id})}
+        yield {"data": json.dumps({"type": "message", "id": str(message_id)})}
     yield {"data": "[DONE]"}
 
 @router.get("/conversas", response_model=ConversaList)

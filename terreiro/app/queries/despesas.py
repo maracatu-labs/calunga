@@ -1,3 +1,5 @@
+import uuid
+
 import asyncpg
 
 from app.sanitize import (
@@ -15,7 +17,7 @@ from app.sanitize import (
 async def listar_despesas(
     pool: asyncpg.Pool,
     *,
-    parlamentar_id: int | None = None,
+    parlamentar_id: uuid.UUID | None = None,
     ano: int | None = None,
     mes: int | None = None,
     categoria: str | None = None,
@@ -94,7 +96,7 @@ async def buscar_despesas_por_nome(
 
 async def resumo_despesas_por_categoria(
     pool: asyncpg.Pool,
-    parlamentar_id: int,
+    parlamentar_id: uuid.UUID,
     *,
     ano: int | None = None,
 ) -> list[asyncpg.Record]:
@@ -121,7 +123,7 @@ async def resumo_despesas(
     pool: asyncpg.Pool,
     *,
     nome: str | None = None,
-    parlamentar_id: int | None = None,
+    parlamentar_id: uuid.UUID | None = None,
     ano: int | None = None,
     mes: int | None = None,
     categoria: str | None = None,

@@ -1,5 +1,6 @@
 import hashlib
 import json
+import uuid
 
 import asyncpg
 
@@ -26,7 +27,7 @@ async def inserir_raw(
         hash_payload,
     )
 
-async def marcar_processado(pool: asyncpg.Pool, raw_id: int) -> None:
+async def marcar_processado(pool: asyncpg.Pool, raw_id: uuid.UUID) -> None:
     await pool.execute(
         "UPDATE raw_ingestao SET processado = TRUE WHERE id = $1",
         raw_id,

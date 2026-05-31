@@ -20,7 +20,7 @@ class ConversaMessage(BaseModel):
     stream) and the caller's latest feedback vote, when authenticated.
     """
 
-    id: int
+    id: UUID
     role: str
     content: str
     tool_calls: list[Any] | None = None

@@ -26,7 +26,7 @@ export default function MessageActions({
   messageId,
 }: {
   content: string;
-  messageId: number | null;
+  messageId: string | null;
 }) {
   const [copied, setCopied] = useState(false);
   const [modalTipo, setModalTipo] = useState<"like" | "dislike" | null>(null);

@@ -12,7 +12,7 @@ router = APIRouter(prefix="/v1", tags=["feedback"])
 
 @router.post("/mensagens/{mensagem_id}/feedback", response_model=FeedbackResponse)
 async def registrar_feedback(
-    mensagem_id: int,
+    mensagem_id: uuid.UUID,
     body: FeedbackCreate,
     current_user: dict = Depends(get_current_user),
 ):

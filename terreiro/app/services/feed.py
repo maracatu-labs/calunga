@@ -1,6 +1,7 @@
 """Serviço para publicar eventos no feed a partir do chat."""
 
 import logging
+import uuid
 
 from app.database import get_pool
 from app.queries.feed import publicar_evento
@@ -15,7 +16,7 @@ async def publicar_descoberta_chat(
     descricao: str,
     dados: dict | None = None,
     referencia_tipo: str | None = None,
-    referencia_id: int | None = None,
+    referencia_id: uuid.UUID | str | None = None,
     relevancia: float = 0.6,
 ) -> bool:
     """Publica uma descoberta feita por cidadão no chat.

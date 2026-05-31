@@ -5,7 +5,7 @@ import asyncpg
 
 async def registrar_feedback(
     pool: asyncpg.Pool,
-    mensagem_id: int,
+    mensagem_id: uuid.UUID,
     user_id: uuid.UUID,
     tipo: str,
     categoria: str | None = None,
@@ -40,7 +40,7 @@ async def registrar_feedback(
 
 async def ultimos_feedbacks(
     pool: asyncpg.Pool, conversa_id: uuid.UUID, user_id: uuid.UUID
-) -> dict[int, str]:
+) -> dict[uuid.UUID, str]:
     """Return the most recent feedback type per message for a user in a conversation.
 
     Used to hydrate the UI state on reload. Maps mensagem_id -> tipo, picking the

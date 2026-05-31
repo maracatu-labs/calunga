@@ -14,7 +14,7 @@ import ChatErrorBoundary from "@/components/chat/chat-error-boundary";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
 
 type Vote = "like" | "dislike" | null;
-type MessageMeta = { dbId: number | null; toolCalls: unknown[]; feedback: Vote };
+type MessageMeta = { dbId: string | null; toolCalls: unknown[]; feedback: Vote };
 
 export default function ChatIdPage() {
   return (

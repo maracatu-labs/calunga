@@ -25,7 +25,7 @@ export async function getFeed(params?: {
   return await res.json();
 }
 
-export async function getFeedEvento(id: number): Promise<FeedEvento | null> {
+export async function getFeedEvento(id: string): Promise<FeedEvento | null> {
   const res = await fetch(`${API_URL}/v1/feed/${id}`, {
     next: { revalidate: 30 },
   });

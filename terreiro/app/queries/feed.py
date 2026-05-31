@@ -1,6 +1,7 @@
 """Queries para o feed público de eventos."""
 
 import json
+import uuid
 
 import asyncpg
 
@@ -93,7 +94,7 @@ async def contar_feed(
     where, params = _build_filters(tipo, categoria, origem)
     return await pool.fetchval(f"SELECT COUNT(*) FROM feed_eventos{where}", *params)
 
-async def get_evento_por_id(pool: asyncpg.Pool, evento_id: int) -> dict | None:
+async def get_evento_por_id(pool: asyncpg.Pool, evento_id: uuid.UUID) -> dict | None:
     """Retorna um evento com payload rico.
 
     Para eventos antigos publicados antes do contrato rico (campo `dados`

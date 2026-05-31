@@ -1,4 +1,5 @@
 import json
+import uuid
 from decimal import Decimal
 
 from langchain_core.tools import tool
@@ -16,7 +17,7 @@ class BuscarDespesasInput(BaseModel):
     """Busca despesas (gastos) de deputados federais usando dados do CEAP."""
 
     nome: str | None = Field(None, description="Nome ou parte do nome do deputado")
-    deputado_id: int | None = Field(None, description="ID interno do deputado no banco de dados")
+    deputado_id: str | None = Field(None, description="ID interno (UUID) do deputado no banco de dados")
     ano: int | None = Field(None, description="Ano das despesas (ex: 2025)")
     mes: int | None = Field(None, description="Mês das despesas (1-12)")
     categoria: str | None = Field(None, description="Categoria da despesa (ex: Alimentação, Combustíveis)")
@@ -153,7 +154,7 @@ _AGRUPAMENTO_EMENDAS = {
 @tool(args_schema=BuscarDespesasInput)
 async def buscar_despesas(
     nome: str | None = None,
-    deputado_id: int | None = None,
+    deputado_id: str | None = None,
     ano: int | None = None,
     mes: int | None = None,
     categoria: str | None = None,
@@ -279,7 +280,7 @@ async def listar_parlamentares(
 
     parlamentares = [
         {
-            "id": r["id"],
+            "id": str(r["id"]),
             "nome": r["nome"],
             "tipo": r["tipo"],
             "partido": r["partido"],
@@ -364,7 +365,7 @@ async def listar_executivos(
 
     executivos = [
         {
-            "id": r["id"],
+            "id": str(r["id"]),
             "cargo": r["tipo"],
             "nome": r["nome"],
             "partido": r["partido"],
@@ -412,7 +413,7 @@ async def buscar_suspeitas(
     suspeitas = []
     for r in rows:
         suspeitas.append({
-            "despesa_id": r["despesa_id"],
+            "despesa_id": str(r["despesa_id"]),
             "parlamentar": _link_parlamentar(r["parlamentar_nome"], r["parlamentar_id_externo"], r["parlamentar_tipo"]),
             "partido": r["partido"],
             "uf": r["uf"],
@@ -441,12 +442,21 @@ async def buscar_suspeitas(
 class ConsultarReciboInput(BaseModel):
     """Consulta a análise OCR + LLM do recibo de uma despesa CEAP específica."""
 
-    despesa_id: int = Field(description="ID interno da despesa no banco (coluna despesas.id). Use o valor retornado por buscar_suspeitas ou buscar_despesas.")
+    despesa_id: str = Field(description="ID interno (UUID) da despesa no banco (coluna despesas.id). Use o valor retornado por buscar_suspeitas ou buscar_despesas.")
 
 @tool(args_schema=ConsultarReciboInput)
-async def consultar_recibo(despesa_id: int) -> str:
+async def consultar_recibo(despesa_id: str) -> str:
     """Retorna a análise detalhada do recibo de uma despesa CEAP (via OCR + LLM). Útil quando o usuário quer saber o que foi comprado, se havia álcool, ou por que um gasto foi sinalizado como irregular. Só funciona em despesas de alimentação; se não houver análise, avise o usuário. Use o despesa_id retornado por buscar_suspeitas ou buscar_despesas."""
     pool = get_pool()
+
+    fonte = "OCR + análise LLM de recibo CEAP (Maracatu)"
+    try:
+        despesa_uuid = uuid.UUID(str(despesa_id))
+    except (ValueError, AttributeError, TypeError):
+        return _resposta_erro(
+            "despesa_id inválido: informe o UUID retornado por buscar_suspeitas ou buscar_despesas.",
+            fonte,
+        )
 
     query = """
         SELECT s.detalhes, s.probabilidade,
@@ -460,8 +470,7 @@ async def consultar_recibo(despesa_id: int) -> str:
         WHERE s.despesa_id = $1 AND s.classificador = 'ocr_recibo'
         LIMIT 1
     """
-    fonte = "OCR + análise LLM de recibo CEAP (Maracatu)"
-    row = await pool.fetchrow(query, despesa_id)
+    row = await pool.fetchrow(query, despesa_uuid)
 
     if not row:
         return _resposta_vazia(

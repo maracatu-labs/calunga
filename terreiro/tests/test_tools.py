@@ -177,9 +177,11 @@ class TestListarExecutivos:
     @pytest.mark.asyncio
     async def test_sem_filtros_lista_tres_cargos(self, install_pool):
         install_pool.fetch.return_value = [
-            record(id=1, nome="Gov SP", tipo="governador", partido="PSDB", uf="SP",
+            record(id="33333333-3333-3333-3333-333333333333", nome="Gov SP", tipo="governador",
+                   partido="PSDB", uf="SP",
                    situacao="Exercício", ente_nome="São Paulo", ente_tipo="estado"),
-            record(id=2, nome="Prefeito Recife", tipo="prefeito", partido="PSB", uf="PE",
+            record(id="44444444-4444-4444-4444-444444444444", nome="Prefeito Recife", tipo="prefeito",
+                   partido="PSB", uf="PE",
                    situacao="Exercício", ente_nome="Recife", ente_tipo="capital"),
         ]
 
@@ -189,6 +191,10 @@ class TestListarExecutivos:
         assert data["modo"] == "lista"
         assert data["total_registros"] == 2
         assert {e["cargo"] for e in data["executivos"]} == {"governador", "prefeito"}
+        assert {e["id"] for e in data["executivos"]} == {
+            "33333333-3333-3333-3333-333333333333",
+            "44444444-4444-4444-4444-444444444444",
+        }
 
 class TestRankingDespesas:
     @pytest.mark.asyncio
@@ -232,10 +238,19 @@ class TestConsultarRecibo:
         install_pool.fetchrow.return_value = None
 
         from app.agent.tools import consultar_recibo
-        data = await _invoke(consultar_recibo, despesa_id=999)
+        despesa_id = "11111111-1111-1111-1111-111111111111"
+        data = await _invoke(consultar_recibo, despesa_id=despesa_id)
 
         assert data["modo"] == "vazio"
-        assert data["filtros"]["despesa_id"] == 999
+        assert data["filtros"]["despesa_id"] == despesa_id
+
+    @pytest.mark.asyncio
+    async def test_id_invalido_retorna_erro(self, install_pool):
+        from app.agent.tools import consultar_recibo
+        data = await _invoke(consultar_recibo, despesa_id="not-a-uuid")
+
+        assert data["modo"] == "erro"
+        assert "despesa_id" in data["erro"]
 
     @pytest.mark.asyncio
     async def test_retorna_analise_estruturada(self, install_pool):
@@ -263,10 +278,11 @@ class TestConsultarRecibo:
         )
 
         from app.agent.tools import consultar_recibo
-        data = await _invoke(consultar_recibo, despesa_id=42)
+        despesa_id = "22222222-2222-2222-2222-222222222222"
+        data = await _invoke(consultar_recibo, despesa_id=despesa_id)
 
         assert data["modo"] == "item"
-        assert data["despesa_id"] == 42
+        assert data["despesa_id"] == despesa_id
         assert data["analise"]["tem_alcool"] is True
         assert data["analise"]["irregularidades"] == ["consumo de bebida alcoolica"]
 

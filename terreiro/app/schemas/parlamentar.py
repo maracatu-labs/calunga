@@ -1,10 +1,11 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel
 
 
 class ParlamentarResponse(BaseModel):
-    id: int
+    id: UUID
     id_externo: str
     tipo: str
     nome: str

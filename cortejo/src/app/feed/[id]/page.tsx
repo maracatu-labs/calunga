@@ -21,7 +21,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const evento = await getFeedEvento(Number(id));
+  const evento = await getFeedEvento(id);
   if (!evento) return { title: "Maracatu - Evento não encontrado" };
   return {
     title: `Maracatu - ${evento.titulo}`,
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function FeedDetailPage({ params }: Props) {
   const { id } = await params;
-  const evento = await getFeedEvento(Number(id));
+  const evento = await getFeedEvento(id);
   if (!evento) notFound();
 
   const dados = evento.dados || {};

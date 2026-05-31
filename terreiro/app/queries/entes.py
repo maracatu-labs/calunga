@@ -1,3 +1,5 @@
+import uuid
+
 import asyncpg
 
 
@@ -29,5 +31,5 @@ async def listar_entes(
 async def buscar_ente_por_ibge(pool: asyncpg.Pool, ibge_codigo: str) -> asyncpg.Record | None:
     return await pool.fetchrow("SELECT * FROM entes WHERE ibge_codigo = $1", ibge_codigo)
 
-async def buscar_ente(pool: asyncpg.Pool, ente_id: int) -> asyncpg.Record | None:
+async def buscar_ente(pool: asyncpg.Pool, ente_id: uuid.UUID) -> asyncpg.Record | None:
     return await pool.fetchrow("SELECT * FROM entes WHERE id = $1", ente_id)

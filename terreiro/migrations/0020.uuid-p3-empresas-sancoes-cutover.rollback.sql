@@ -1,0 +1,15 @@
+-- Rollback Maracatu UUID retrofit P3 / Stage D (empresas + sancoes leaves cutover).
+--
+-- IRREVERSIBLE: the apply migration DROPped the int id column on empresas and sancoes,
+-- which also dropped the SERIAL sequences. The original integer ids cannot be regenerated
+-- by SQL. To recover a committed-but-bad 0020, restore the pre-window backup instead of
+-- running this rollback:
+--   make restore FILE=<pre-window backup>
+-- (the retrofit window verifies `make backup` is restorable before this apply runs).
+--
+-- There is no structurally reversible step here: both tables only swapped their own PK
+-- column (no data column was dropped beyond the int id itself, and that int data is gone).
+-- This file exists to keep the yoyo migration pair symmetric and to document recovery.
+
+-- empresas, sancoes: NOT reversible here.
+-- Recover via `make restore FILE=<pre-window backup>` (see header).

@@ -1,3 +1,4 @@
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
@@ -7,7 +8,7 @@ import asyncpg
 
 @dataclass
 class Suspeita:
-    despesa_id: int
+    despesa_id: uuid.UUID
     classificador: str
     probabilidade: Decimal
     detalhes: dict

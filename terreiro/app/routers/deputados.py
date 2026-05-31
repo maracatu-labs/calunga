@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, HTTPException, Query
 
 from app.database import get_pool
@@ -24,7 +26,7 @@ async def listar_deputados(
     return ParlamentarList(data=data, total=len(data))
 
 @router.get("/{deputado_id}", response_model=ParlamentarResponse)
-async def buscar_deputado(deputado_id: int):
+async def buscar_deputado(deputado_id: uuid.UUID):
     pool = get_pool()
     row = await parlamentares_q.buscar_parlamentar(pool, deputado_id)
     if not row:
@@ -33,7 +35,7 @@ async def buscar_deputado(deputado_id: int):
 
 @router.get("/{deputado_id}/despesas", response_model=DespesaList)
 async def listar_despesas_deputado(
-    deputado_id: int,
+    deputado_id: uuid.UUID,
     ano: int | None = Query(None, description="Ano (ex: 2025)"),
     mes: int | None = Query(None, ge=1, le=12, description="Mês (1-12)"),
     categoria: str | None = Query(None, description="Categoria da despesa"),

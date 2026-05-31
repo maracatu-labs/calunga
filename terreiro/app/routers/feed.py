@@ -1,6 +1,7 @@
 """Endpoint público do feed de eventos."""
 
 import json
+import uuid
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -52,7 +53,7 @@ async def get_feed(
     }
 
 @router.get("/{evento_id}")
-async def get_feed_evento(evento_id: int):
+async def get_feed_evento(evento_id: uuid.UUID):
     pool = get_pool()
     evento = await get_evento_por_id(pool, evento_id)
     if not evento:

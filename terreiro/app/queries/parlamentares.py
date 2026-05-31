@@ -1,3 +1,5 @@
+import uuid
+
 import asyncpg
 
 from app.sanitize import (
@@ -48,7 +50,7 @@ async def listar_parlamentares(
 
     return await pool.fetch(query, *params)
 
-async def buscar_parlamentar(pool: asyncpg.Pool, parlamentar_id: int) -> asyncpg.Record | None:
+async def buscar_parlamentar(pool: asyncpg.Pool, parlamentar_id: uuid.UUID) -> asyncpg.Record | None:
     return await pool.fetchrow(
         "SELECT * FROM parlamentares WHERE id = $1",
         parlamentar_id,
